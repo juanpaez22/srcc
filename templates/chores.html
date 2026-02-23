@@ -26,14 +26,20 @@
                 <form method="POST">
                     <input type="hidden" name="action" value="add">
                     <input type="text" name="name" placeholder="Chore name" required>
-                    <select name="schedule">
+                    <select name="schedule" id="scheduleSelect" onchange="updateScheduleParam()">
                         <option value="daily">Daily</option>
-                        <option value="weekly">Weekly (Sundays)</option>
+                        <option value="weekly">Weekly</option>
                         <option value="biweekly">Bi-weekly</option>
-                        <option value="monthly">Monthly (First Sunday)</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                        <option value="onetime">One Time</option>
                     </select>
+                    <div id="scheduleParamField" style="display: none;"></div>
                     <button type="submit">Add Chore</button>
                 </form>
+                <p style="color: var(--tan); font-size: 0.8rem; margin-top: 10px;">
+                    Weekly/Bi-weekly: Select day of week | Monthly: Select day of month | Yearly: mm-dd | One time: yyyy-mm-dd
+                </p>
             </section>
 
             <section class="card">
@@ -44,7 +50,13 @@
                     <li>
                         <div class="chore-info">
                             <span class="chore-name">{{ chore.name }}</span>
-                            <span class="chore-schedule">{{ chore.schedule }} | Last done: {{ chore.last_done or 'Never' }}</span>
+                            <span class="chore-schedule">
+                                {{ chore.schedule }}
+                                {% if chore.schedule_param %}
+                                    ({{ chore.schedule_param }})
+                                {% endif %}
+                                | Last done: {{ chore.last_done or 'Never' }}
+                            </span>
                         </div>
                         <div class="chore-actions">
                             <a href="/complete_chore/{{ loop.index0 }}" class="btn-complete">Done Today</a>
@@ -63,5 +75,44 @@
             <h3>Stone Ranch Command Center</h3>
         </footer>
     </div>
+
+    <script>
+        function updateScheduleParam() {
+            const select = document.getElementById('scheduleSelect');
+            const field = document.getElementById('scheduleParamField');
+            
+            const schedule = select.value;
+            if (schedule === 'weekly' || schedule === 'biweekly') {
+                field.style.display = 'block';
+                field.innerHTML = `
+                    <select name="schedule_param">
+                        <option value="0">Monday</option>
+                        <option value="1">Tuesday</option>
+                        <option value="2">Wednesday</option>
+                        <option value="3">Thursday</option>
+                        <option value="4">Friday</option>
+                        <option value="5">Saturday</option>
+                        <option value="6" selected>Sunday</option>
+                    </select>
+                `;
+            } else if (schedule === 'monthly') {
+                field.style.display = 'block';
+                let options = '';
+                for (let i = 1; i <= 28; i++) {
+                    options += `<option value="${i}">${i}</option>`;
+                }
+                field.innerHTML = `<select name="schedule_param">${options}</select>`;
+            } else if (schedule === 'yearly') {
+                field.style.display = 'block';
+                field.innerHTML = '<input type="text" name="schedule_param" placeholder="mm-dd" pattern="\\d{2}-\\d{2}" style="padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);">';
+            } else if (schedule === 'onetime') {
+                field.style.display = 'block';
+                field.innerHTML = '<input type="date" name="schedule_param" style="padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);">';
+            } else {
+                field.style.display = 'none';
+                field.innerHTML = '';
+            }
+        }
+    </script>
 </body>
 </html>

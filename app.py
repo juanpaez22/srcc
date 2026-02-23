@@ -4,12 +4,14 @@ import time
 import requests
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import pytz
 from config import WEATHER_LAT, WEATHER_LON, WEATHER_CITY, NEWS_FEEDS, STOCKS
 
 app = Flask(__name__)
 
 DATA_FILE = os.path.join(os.path.dirname(__file__), 'data.json')
+PACIFIC_TZ = pytz.timezone('America/Los_Angeles')
 
 def load_data():
     if os.path.exists(DATA_FILE):
@@ -34,38 +36,26 @@ def get_weather():
         wind = current.get('wind_speed_10m', 0)
         code = current.get('weather_code', 0)
         
-        now = datetime.now()
-        current_hour = now.hour
+        now_pacific = datetime.now(PACIFIC_TZ)
         hourly_times = hourly.get('time', [])
         hourly_temps = hourly.get('temperature_2m', [])
         hourly_codes = hourly.get('weather_code', [])
         
         forecast = []
-        for i, t in enumerate(hourly_times):
-            dt = datetime.fromisoformat(t.replace('Z', '+00:00'))
-            # Show hours from current local time onwards (next 24h)
-            if dt.hour >= current_hour and dt.day == now.day:
-                temp_c = hourly_temps[i] if i < len(hourly_temps) else 0
-                forecast.append({
-                    'time': dt.strftime('%I %p'),
-                    'temp': round(temp_c * 9/5 + 32),
-                    'code': hourly_codes[i] if i < len(hourly_codes) else 0
-                })
-                if len(forecast) >= 6:
-                    break
         
-        # If no forecast for today, get tomorrow's
-        if not forecast:
-            for i, t in enumerate(hourly_times):
-                dt = datetime.fromisoformat(t.replace('Z', '+00:00'))
-                temp_c = hourly_temps[i] if i < len(hourly_temps) else 0
-                forecast.append({
-                    'time': dt.strftime('%I %p'),
-                    'temp': round(temp_c * 9/5 + 32),
-                    'code': hourly_codes[i] if i < len(hourly_codes) else 0
-                })
-                if len(forecast) >= 6:
-                    break
+        # Show the next 6 hours from now
+        # Note: Open-Meteo hourly data starts at midnight UTC, so we get early morning hours
+        for i, t in enumerate(hourly_times):
+            dt_utc = datetime.fromisoformat(t.replace('Z', '+00:00'))
+            dt_pacific = dt_utc.astimezone(PACIFIC_TZ)
+            temp_c = hourly_temps[i] if i < len(hourly_temps) else 0
+            forecast.append({
+                'time': dt_pacific.strftime('%I %p'),
+                'temp': round(temp_c * 9/5 + 32),
+                'code': hourly_codes[i] if i < len(hourly_codes) else 0
+            })
+            if len(forecast) >= 6:
+                break
         
         conditions = {
             0: "Clear", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
@@ -101,12 +91,16 @@ def get_news():
                 source = ""
                 if 'bbc' in feed_url:
                     source = "BBC"
+                elif 'reuters' in feed_url:
+                    source = "Reuters"
+                elif 'nytimes' in feed_url:
+                    source = "NYT"
                 elif 'techcrunch' in feed_url:
                     source = "TechCrunch"
                 elif 'verge' in feed_url:
                     source = "The Verge"
-                elif 'reuters' in feed_url:
-                    source = "Reuters"
+                elif 'wired' in feed_url:
+                    source = "Wired"
                 
                 import re
                 items = re.findall(r'<item>(.*?)</item>', content, re.DOTALL)
@@ -174,22 +168,30 @@ def get_today_chores():
     data = load_data()
     today = datetime.now()
     today_str = today.strftime('%Y-%m-%d')
-    today_dow = today.weekday()
+    today_dow = today.weekday()  # 0=Monday, 6=Sunday
+    today_dom = today.day
     
     chores = []
     for chore in data.get('chores', []):
-        schedule = chore.get('schedule', 'weekly')
+        schedule = chore.get('schedule', 'daily')
+        schedule_param = chore.get('schedule_param', '')
         last_done = chore.get('last_done', '')
         
         should_show = False
         
         if schedule == 'daily':
             should_show = True
+            
         elif schedule == 'weekly':
-            if today_dow == 6:  # Sunday
+            # schedule_param is day of week (0-6, Monday=0)
+            target_dow = int(schedule_param) if schedule_param else 6
+            if today_dow == target_dow:
                 should_show = True
+                
         elif schedule == 'biweekly':
-            if today_dow == 6:
+            # schedule_param is day of week (0-6)
+            target_dow = int(schedule_param) if schedule_param else 6
+            if today_dow == target_dow:
                 if last_done:
                     try:
                         last = datetime.strptime(last_done, '%Y-%m-%d')
@@ -199,8 +201,11 @@ def get_today_chores():
                         should_show = True
                 else:
                     should_show = True
+                    
         elif schedule == 'monthly':
-            if today_dow == 6 and today.day <= 7:
+            # schedule_param is day of month (1-31)
+            target_dom = int(schedule_param) if schedule_param else 1
+            if today_dom == target_dom:
                 if last_done:
                     try:
                         last = datetime.strptime(last_done, '%Y-%m-%d')
@@ -210,6 +215,18 @@ def get_today_chores():
                         should_show = True
                 else:
                     should_show = True
+                    
+        elif schedule == 'yearly':
+            # schedule_param is mm-dd
+            if schedule_param:
+                month_day = today.strftime('%m-%d')
+                if month_day == schedule_param:
+                    should_show = True
+                    
+        elif schedule == 'onetime':
+            # schedule_param is yyyy-mm-dd
+            if schedule_param == today_str:
+                should_show = True
         
         if should_show:
             chores.append(chore['name'])
@@ -328,6 +345,7 @@ def chores_page():
             chore = {
                 'name': request.form.get('name'),
                 'schedule': request.form.get('schedule'),
+                'schedule_param': request.form.get('schedule_param', ''),
                 'last_done': ''
             }
             data['chores'].append(chore)

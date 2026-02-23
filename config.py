@@ -8,19 +8,22 @@ WEATHER_CITY = "Kirkland, WA"
 # Stocks to track (Yahoo Finance symbols)
 STOCKS = ["MSFT", "AMZN", "GOOGL", "AAPL", "NVDA", "TSLA"]
 
-# News feeds (RSS URLs) - simplified
+# News feeds (RSS URLs) - at least 2-3 sources per category
 NEWS_FEEDS = {
     "world": {
         "title": "World News",
         "feeds": [
-            "https://feeds.bbci.co.uk/news/world/rss.xml"
+            "https://feeds.bbci.co.uk/news/world/rss.xml",
+            "https://feeds.reuters.com/reuters/topNews",
+            "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
         ]
     },
     "tech": {
         "title": "Tech News",
         "feeds": [
             "https://techcrunch.com/feed/",
-            "https://www.theverge.com/rss/index.xml"
+            "https://www.theverge.com/rss/index.xml",
+            "https://www.wired.com/feed/rss"
         ]
     }
 }
