@@ -26,11 +26,17 @@
                 <p class="date" id="current-date"></p>
             </section>
 
-            {% if missing_users %}
+            {% if missing_users or completed_users %}
             <section class="card checkin-prompt">
                 <h2>Daily Check-in</h2>
-                <p>{% if missing_users|length == 1 %}{{ missing_users[0] }}{% else %}{{ missing_users|join(', ') }}{% endif %}: Did you fill out yesterday's check-in?</p>
+                <p>Yesterday ({{ yesterday }}):</p>
+                {% if completed_users %}
+                <p style="color: #4caf50;">✓ Completed: {{ completed_users|join(', ') }}</p>
+                {% endif %}
+                {% if missing_users %}
+                <p style="color: #f44336;">✗ Missing: {{ missing_users|join(', ') }}</p>
                 <a href="/telemetry?date={{ yesterday }}" class="btn">Fill Out Now</a>
+                {% endif %}
             </section>
             {% endif %}
 

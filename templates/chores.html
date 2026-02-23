@@ -28,8 +28,7 @@
                     <input type="text" name="name" placeholder="Chore name" required>
                     <select name="schedule" id="scheduleSelect" onchange="updateScheduleParam()">
                         <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="biweekly">Bi-weekly</option>
+                        <option value="weekly">Every N Weeks</option>
                         <option value="monthly">Monthly</option>
                         <option value="yearly">Yearly</option>
                         <option value="onetime">One Time</option>
@@ -38,7 +37,7 @@
                     <button type="submit">Add Chore</button>
                 </form>
                 <p style="color: var(--tan); font-size: 0.8rem; margin-top: 10px;">
-                    Weekly/Bi-weekly: Select day of week | Monthly: Select day of month | Yearly: mm-dd | One time: yyyy-mm-dd
+                    Every N: Select weeks (1-52) + day of week | Monthly: day 1-28 | Yearly: mm-dd | One time: yyyy-mm-dd
                 </p>
             </section>
 
@@ -53,7 +52,21 @@
                             <span class="chore-schedule">
                                 {{ chore.schedule }}
                                 {% if chore.schedule_param %}
-                                    ({{ chore.schedule_param }})
+                                    {% if ',' in chore.schedule_param %}
+                                        {% set parts = chore.schedule_param.split(',') %}
+                                        (every {{ parts[0] }} week(s) on 
+                                        {% if parts[1] == '0' %}Monday
+                                        {% elif parts[1] == '1' %}Tuesday
+                                        {% elif parts[1] == '2' %}Wednesday
+                                        {% elif parts[1] == '3' %}Thursday
+                                        {% elif parts[1] == '4' %}Friday
+                                        {% elif parts[1] == '5' %}Saturday
+                                        {% elif parts[1] == '6' %}Sunday{% endif %})
+                                    {% elif '-' in chore.schedule_param and chore.schedule == 'yearly' %}
+                                        ({{ chore.schedule_param }})
+                                    {% else %}
+                                        ({{ chore.schedule_param }})
+                                    {% endif %}
                                 {% endif %}
                                 | Last done: {{ chore.last_done or 'Never' }}
                             </span>
@@ -82,10 +95,13 @@
             const field = document.getElementById('scheduleParamField');
             
             const schedule = select.value;
-            if (schedule === 'weekly' || schedule === 'biweekly') {
+            if (schedule === 'weekly') {
+                // Every N weeks: number input + day of week
                 field.style.display = 'block';
                 field.innerHTML = `
-                    <select name="schedule_param">
+                    <input type="number" name="schedule_weeks" value="1" min="1" max="52" style="width: 60px; padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);">
+                    <span>week(s) on </span>
+                    <select name="schedule_param" style="padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);">
                         <option value="0">Monday</option>
                         <option value="1">Tuesday</option>
                         <option value="2">Wednesday</option>
@@ -104,7 +120,7 @@
                 field.innerHTML = `<select name="schedule_param">${options}</select>`;
             } else if (schedule === 'yearly') {
                 field.style.display = 'block';
-                field.innerHTML = '<input type="text" name="schedule_param" placeholder="mm-dd" pattern="\\d{2}-\\d{2}" style="padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);">';
+                field.innerHTML = '<div style="display: flex; gap: 5px;"><input type="number" name="schedule_month" placeholder="mm" min="1" max="12" style="width: 50px; padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);"><input type="number" name="schedule_day" placeholder="dd" min="1" max="31" style="width: 50px; padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);"></div>';
             } else if (schedule === 'onetime') {
                 field.style.display = 'block';
                 field.innerHTML = '<input type="date" name="schedule_param" style="padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);">';

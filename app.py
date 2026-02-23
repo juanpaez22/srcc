@@ -186,19 +186,20 @@ def get_today_chores():
             should_show = True
             
         elif schedule == 'weekly':
-            # schedule_param is day of week (0-6, Monday=0)
-            target_dow = int(schedule_param) if schedule_param else 6
-            if today_dow == target_dow:
-                should_show = True
-                
-        elif schedule == 'biweekly':
-            # schedule_param is day of week (0-6)
-            target_dow = int(schedule_param) if schedule_param else 6
+            # schedule_param is "weeks,day" e.g., "2,0" = every 2 weeks on Monday
+            if ',' in schedule_param:
+                parts = schedule_param.split(',')
+                weeks = int(parts[0]) if parts[0] else 1
+                target_dow = int(parts[1]) if len(parts) > 1 else 6
+            else:
+                weeks = 1
+                target_dow = int(schedule_param) if schedule_param else 6
+            
             if today_dow == target_dow:
                 if last_done:
                     try:
                         last = datetime.strptime(last_done, '%Y-%m-%d')
-                        if (today - last).days >= 14:
+                        if (today - last).days >= (weeks * 7):
                             should_show = True
                     except:
                         should_show = True
@@ -243,19 +244,25 @@ def get_yesterday_checkin_status():
     telemetry = data.get('telemetry', {})
     
     missing = []
+    completed = []
     for user in users:
-        if yesterday not in telemetry.get(user, []):
+        user_entries = telemetry.get(user, [])
+        has_entry = any(entry.get('date') == yesterday for entry in user_entries)
+        if has_entry:
+            completed.append(user)
+        else:
             missing.append(user)
     
-    return yesterday, missing
+    return yesterday, missing, completed
 
 @app.route('/')
 def index():
-    yesterday, missing_users = get_yesterday_checkin_status()
+    yesterday, missing_users, completed_users = get_yesterday_checkin_status()
     return render_template('index.html', 
                            weather_city=WEATHER_CITY,
                            yesterday=yesterday,
-                           missing_users=missing_users)
+                           missing_users=missing_users,
+                           completed_users=completed_users)
 
 @app.route('/stats')
 def stats():
@@ -283,8 +290,8 @@ def chores():
 
 @app.route('/checkin_status')
 def checkin_status():
-    yesterday, missing_users = get_yesterday_checkin_status()
-    return {'yesterday': yesterday, 'missing_users': missing_users}
+    yesterday, missing_users, completed_users = get_yesterday_checkin_status()
+    return {'yesterday': yesterday, 'missing_users': missing_users, 'completed_users': completed_users}
 
 @app.route('/telemetry', methods=['GET', 'POST'])
 def telemetry():
@@ -345,10 +352,25 @@ def chores_page():
         action = request.form.get('action')
         
         if action == 'add':
+            schedule = request.form.get('schedule')
+            schedule_param = request.form.get('schedule_param', '')
+            
+            # Handle weekly (every N weeks)
+            if schedule == 'weekly':
+                weeks = request.form.get('schedule_weeks', '1')
+                day = request.form.get('schedule_param', '6')
+                schedule_param = f"{weeks},{day}"  # e.g., "2,0" = every 2 weeks on Monday
+            
+            # Handle yearly (mm-dd)
+            elif schedule == 'yearly':
+                month = request.form.get('schedule_month', '01')
+                day = request.form.get('schedule_day', '01')
+                schedule_param = f"{month}-{day}"
+            
             chore = {
                 'name': request.form.get('name'),
-                'schedule': request.form.get('schedule'),
-                'schedule_param': request.form.get('schedule_param', ''),
+                'schedule': schedule,
+                'schedule_param': schedule_param,
                 'last_done': ''
             }
             data['chores'].append(chore)
