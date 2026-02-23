@@ -5,12 +5,14 @@ WEATHER_LAT = 47.6769
 WEATHER_LON = -122.2060
 WEATHER_CITY = "Kirkland, WA"
 
-# News feeds (RSS URLs)
+# Stocks to track (Yahoo Finance symbols)
+STOCKS = ["MSFT", "AMZN", "GOOGL", "AAPL", "NVDA", "TSLA"]
+
+# News feeds (RSS URLs) - simplified
 NEWS_FEEDS = {
     "world": {
         "title": "World News",
         "feeds": [
-            "https://feeds.reuters.com/reuters/topNews",
             "https://feeds.bbci.co.uk/news/world/rss.xml"
         ]
     },
@@ -27,3 +29,4 @@ NEWS_FEEDS = {
 REFRESH_INTERVAL_STATS = 3000
 REFRESH_INTERVAL_WEATHER = 300000  # 5 minutes
 REFRESH_INTERVAL_NEWS = 300000     # 5 minutes
+REFRESH_INTERVAL_STOCKS = 60000    # 1 minute

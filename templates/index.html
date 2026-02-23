@@ -10,14 +10,7 @@
     <div class="container">
         <header class="site-header">
             <div class="logo-section">
-                <svg class="longhorn-icon" viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M10 30 Q15 10 35 8 L40 5 Q45 2 50 5 L55 8 Q75 10 80 30 Q85 50 65 52 L60 55 Q55 58 50 55 L45 52 Q25 50 10 30 Z" fill="#CC5500"/>
-                    <path d="M25 28 Q30 18 42 17 L45 15 Q48 13 50 15 L55 17 Q65 18 70 28 Q75 38 60 40 L55 42 Q52 43 50 42 L45 40 Q30 38 25 28 Z" fill="#D2691E"/>
-                    <circle cx="40" cy="28" r="2.5" fill="#2D1810"/>
-                    <circle cx="55" cy="28" r="2.5" fill="#2D1810"/>
-                    <ellipse cx="47" cy="32" rx="3" ry="2" fill="#2D1810"/>
-                    <path d="M35 35 Q40 38 45 35" stroke="#2D1810" stroke-width="1.5" fill="none"/>
-                </svg>
+                <img src="/static/longhorn.png" class="logo-img" alt="Stone Ranch">
                 <h1>Stone Ranch Command Center</h1>
             </div>
             <nav class="nav-links">
@@ -33,6 +26,14 @@
                 <p class="date" id="current-date"></p>
             </section>
 
+            {% if missing_users %}
+            <section class="card checkin-prompt">
+                <h2>Daily Check-in</h2>
+                <p>{% if missing_users|length == 1 %}{{ missing_users[0] }}{% else %}{{ missing_users|join(', ') }}{% endif %}: Did you fill out yesterday's check-in?</p>
+                <a href="/telemetry?date={{ yesterday }}" class="btn">Fill Out Now</a>
+            </section>
+            {% endif %}
+
             <section class="card weather-card">
                 <h2>{{ weather_city }} Weather</h2>
                 <div class="weather-current">
@@ -45,8 +46,13 @@
                         <span class="wind">Wind: <span id="wind">--</span> mph</span>
                     </div>
                 </div>
-                <div class="weather-forecast" id="forecast">
-                    <!-- Hourly forecast populated by JS -->
+                <div class="weather-forecast" id="forecast"></div>
+            </section>
+
+            <section class="card stocks-card">
+                <h2>Stocks</h2>
+                <div class="stocks-grid" id="stocks-grid">
+                    <span class="stocks-loading">Loading...</span>
                 </div>
             </section>
 
@@ -128,6 +134,25 @@
                 });
         }
 
+        function updateStocks() {
+            fetch('/stocks')
+                .then(r => r.json())
+                .then(data => {
+                    const grid = document.getElementById('stocks-grid');
+                    if (data.stocks.length === 0) {
+                        grid.innerHTML = '<span>Unable to load stocks</span>';
+                        return;
+                    }
+                    grid.innerHTML = data.stocks.map(s => `
+                        <div class="stock-item">
+                            <span class="stock-symbol">${s.symbol}</span>
+                            <span class="stock-price">$${s.price}</span>
+                            <span class="stock-change ${s.change >= 0 ? 'up' : 'down'}">${s.change >= 0 ? '+' : ''}${s.change_pct}%</span>
+                        </div>
+                    `).join('');
+                });
+        }
+
         function updateNews() {
             fetch('/news')
                 .then(r => r.json())
@@ -140,7 +165,7 @@
                     ).join('');
                     
                     document.getElementById('news-tech').innerHTML = tech.map(a => 
-                        `<a href="${a.link}" target="_blank" class="news-item">${a.title}</a>`
+                        `<a href="${a.link}" target="_blank" class="news-item">${a.title} <span class="news-source">(${a.source})</span></a>`
                     ).join('');
                 });
         }
@@ -163,10 +188,12 @@
 
         updateStats();
         updateWeather();
+        updateStocks();
         updateNews();
         updateChores();
         setInterval(updateStats, 3000);
         setInterval(updateWeather, 300000);
+        setInterval(updateStocks, 60000);
         setInterval(updateNews, 300000);
     </script>
 </body>
