@@ -62,6 +62,11 @@
                 </div>
             </section>
 
+            <section class="chores-section card" id="overdue-section" style="display: none;">
+                <h2 style="color: #f44336;">⚠️ Overdue Chores</h2>
+                <ul class="chores-list" id="overdue-list"></ul>
+            </section>
+
             <section class="chores-section card" id="chores-section" style="display: none;">
                 <h2>Today's Chores</h2>
                 <ul class="chores-list" id="chores-list"></ul>
@@ -180,6 +185,7 @@
             fetch('/chores')
                 .then(r => r.json())
                 .then(data => {
+                    // Today's chores
                     const section = document.getElementById('chores-section');
                     const list = document.getElementById('chores-list');
                     
@@ -188,6 +194,17 @@
                         list.innerHTML = data.chores.map(c => `<li>${c}</li>`).join('');
                     } else {
                         section.style.display = 'none';
+                    }
+                    
+                    // Overdue chores
+                    const overdueSection = document.getElementById('overdue-section');
+                    const overdueList = document.getElementById('overdue-list');
+                    
+                    if (data.overdue && data.overdue.length > 0) {
+                        overdueSection.style.display = 'block';
+                        overdueList.innerHTML = data.overdue.map(c => `<li>${c}</li>`).join('');
+                    } else {
+                        overdueSection.style.display = 'none';
                     }
                 });
         }

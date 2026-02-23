@@ -237,6 +237,56 @@ def get_today_chores():
     
     return chores
 
+def get_overdue_chores():
+    """Get chores that were due but not completed"""
+    data = load_data()
+    today = datetime.now()
+    today_str = today.strftime('%Y-%m-%d')
+    today_dow = today.weekday()
+    today_dom = today.day
+    
+    overdue = []
+    for chore in data.get('chores', []):
+        # Skip if already done today
+        if chore.get('last_done', '') == today_str:
+            continue
+            
+        schedule = chore.get('schedule', 'daily')
+        schedule_param = chore.get('schedule_param', '')
+        last_done = chore.get('last_done', '')
+        
+        # Check if it was due on any previous day
+        was_due = False
+        
+        if schedule == 'daily':
+            was_due = True  # All daily chores are overdue if not done today
+        elif schedule == 'weekly':
+            if ',' in schedule_param:
+                parts = schedule_param.split(',')
+                target_dow = int(parts[1]) if len(parts) > 1 else 6
+            else:
+                target_dow = int(schedule_param) if schedule_param else 6
+            # Check if the target day was earlier this week
+            if today_dow > target_dow:
+                was_due = True
+        elif schedule == 'monthly':
+            target_dom = int(schedule_param) if schedule_param else 1
+            if today_dom > target_dom:
+                was_due = True
+        elif schedule == 'yearly':
+            if schedule_param:
+                month_day = today.strftime('%m-%d')
+                if month_day > schedule_param:
+                    was_due = True
+        elif schedule == 'onetime':
+            if schedule_param and schedule_param < today_str:
+                was_due = True
+        
+        if was_due:
+            overdue.append(chore['name'])
+    
+    return overdue
+
 def get_yesterday_checkin_status():
     data = load_data()
     yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
@@ -286,7 +336,7 @@ def stocks():
 
 @app.route('/chores')
 def chores():
-    return {'chores': get_today_chores()}
+    return {'chores': get_today_chores(), 'overdue': get_overdue_chores()}
 
 @app.route('/checkin_status')
 def checkin_status():
