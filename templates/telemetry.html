@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker - Stone Ranch Command Center</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="site-header">
+            <div class="logo-section">
+                <svg class="longhorn-icon" viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 30 Q15 10 35 8 L40 5 Q45 2 50 5 L55 8 Q75 10 80 30 Q85 50 65 52 L60 55 Q55 58 50 55 L45 52 Q25 50 10 30 Z" fill="#CC5500"/>
+                    <path d="M25 28 Q30 18 42 17 L45 15 Q48 13 50 15 L55 17 Q65 18 70 28 Q75 38 60 40 L55 42 Q52 43 50 42 L45 40 Q30 38 25 28 Z" fill="#D2691E"/>
+                    <circle cx="40" cy="28" r="2.5" fill="#2D1810"/>
+                    <circle cx="55" cy="28" r="2.5" fill="#2D1810"/>
+                    <ellipse cx="47" cy="32" rx="3" ry="2" fill="#2D1810"/>
+                    <path d="M35 35 Q40 38 45 35" stroke="#2D1810" stroke-width="1.5" fill="none"/>
+                </svg>
+                <h1>Stone Ranch Command Center</h1>
+            </div>
+            <nav class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/chores_page">Chores</a>
+                <a href="/telemetry">Tracker</a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <section class="card">
+                <h2>Daily Check-in</h2>
+                <p style="color: var(--tan); text-align: center; margin-bottom: 20px;">Track your daily habits and metrics</p>
+                
+                <form class="tracker-form" id="trackerForm">
+                    <div class="tracker-metrics">
+                        <div class="metric-input">
+                            <label>Workout (minutes)</label>
+                            <input type="number" name="workout" placeholder="0" min="0">
+                        </div>
+                        <div class="metric-input">
+                            <label>Sleep (hours)</label>
+                            <input type="number" name="sleep" placeholder="0" min="0" max="24" step="0.5">
+                        </div>
+                        <div class="metric-input">
+                            <label>Water (glasses)</label>
+                            <input type="number" name="water" placeholder="0" min="0">
+                        </div>
+                        <div class="metric-input">
+                            <label>Alcohol (drinks)</label>
+                            <input type="number" name="alcohol" placeholder="0" min="0">
+                        </div>
+                        <div class="metric-input">
+                            <label>Mood (1-10)</label>
+                            <input type="number" name="mood" placeholder="5" min="1" max="10">
+                        </div>
+                        <div class="metric-input">
+                            <label>Productivity (1-10)</label>
+                            <input type="number" name="productivity" placeholder="5" min="1" max="10">
+                        </div>
+                        <div class="metric-input">
+                            <label>Reading (pages)</label>
+                            <input type="number" name="reading" placeholder="0" min="0">
+                        </div>
+                        <div class="metric-input">
+                            <label>Screen Time (hours)</label>
+                            <input type="number" name="screen" placeholder="0" min="0" step="0.5">
+                        </div>
+                    </div>
+                    <button type="submit" style="width: 100%;">Save Today's Entry</button>
+                </form>
+            </section>
+
+            <section class="card tracker-entries">
+                <h3>Your History</h3>
+                {% if entries %}
+                    {% for entry in reversed(entries) %}
+                    <div class="entry">
+                        <div class="entry-date">{{ entry.date }}</div>
+                        <div class="entry-metrics">
+                            {% for key, value in entry.metrics.items() %}
+                            <span class="entry-metric">{{ key }}: {{ value }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <p style="text-align: center; color: var(--tan);">No entries yet. Start tracking today!</p>
+                {% endif %}
+            </section>
+        </main>
+
+        <footer class="telemetry">
+            <h3>Stone Ranch Command Center</h3>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('trackerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const metrics = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (value) metrics[key] = value;
+            }
+            
+            if (Object.keys(metrics).length === 0) {
+                alert('Please enter at least one metric');
+                return;
+            }
+            
+            await fetch('/telemetry', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({metrics})
+            });
+            
+            e.target.reset();
+            location.reload();
+        });
+    </script>
+</body>
+</html>

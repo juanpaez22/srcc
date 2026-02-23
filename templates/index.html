@@ -8,28 +8,34 @@
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <div class="logo">
-                <svg class="cow-icon" viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
-                    <ellipse cx="50" cy="45" rx="35" ry="25" fill="#CC5500"/>
-                    <ellipse cx="50" cy="40" rx="30" ry="20" fill="#D2691E"/>
-                    <ellipse cx="50" cy="35" rx="25" ry="15" fill="#E8A962"/>
-                    <ellipse cx="30" cy="20" rx="12" ry="10" fill="#CC5500"/>
-                    <ellipse cx="70" cy="20" rx="12" ry="10" fill="#CC5500"/>
-                    <circle cx="40" cy="32" r="3" fill="#2D1810"/>
-                    <circle cx="60" cy="32" r="3" fill="#2D1810"/>
-                    <ellipse cx="50" cy="42" rx="5" ry="3" fill="#2D1810"/>
-                    <ellipse cx="85" cy="45" rx="8" ry="12" fill="#CC5500"/>
-                    <ellipse cx="15" cy="45" rx="8" ry="12" fill="#CC5500"/>
+        <header class="site-header">
+            <div class="logo-section">
+                <svg class="longhorn-icon" viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 30 Q15 10 35 8 L40 5 Q45 2 50 5 L55 8 Q75 10 80 30 Q85 50 65 52 L60 55 Q55 58 50 55 L45 52 Q25 50 10 30 Z" fill="#CC5500"/>
+                    <path d="M25 28 Q30 18 42 17 L45 15 Q48 13 50 15 L55 17 Q65 18 70 28 Q75 38 60 40 L55 42 Q52 43 50 42 L45 40 Q30 38 25 28 Z" fill="#D2691E"/>
+                    <circle cx="40" cy="28" r="2.5" fill="#2D1810"/>
+                    <circle cx="55" cy="28" r="2.5" fill="#2D1810"/>
+                    <ellipse cx="47" cy="32" rx="3" ry="2" fill="#2D1810"/>
+                    <path d="M35 35 Q40 38 45 35" stroke="#2D1810" stroke-width="1.5" fill="none"/>
                 </svg>
+                <h1>Stone Ranch Command Center</h1>
             </div>
-            <h1>Welcome to Stone Ranch</h1>
+            <nav class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/chores_page">Chores</a>
+                <a href="/telemetry">Tracker</a>
+            </nav>
         </header>
 
         <main class="main-content">
+            <section class="welcome-section">
+                <h2>Welcome to Stone Ranch</h2>
+                <p class="date" id="current-date"></p>
+            </section>
+
             <section class="card weather-card">
-                <h2>Kirkland Weather</h2>
-                <div class="weather-content">
+                <h2>{{ weather_city }} Weather</h2>
+                <div class="weather-current">
                     <div class="weather-main">
                         <span class="temp" id="temp">--</span>
                         <span class="degree">°F</span>
@@ -38,6 +44,25 @@
                         <span class="condition" id="condition">Loading...</span>
                         <span class="wind">Wind: <span id="wind">--</span> mph</span>
                     </div>
+                </div>
+                <div class="weather-forecast" id="forecast">
+                    <!-- Hourly forecast populated by JS -->
+                </div>
+            </section>
+
+            <section class="chores-section card" id="chores-section" style="display: none;">
+                <h2>Today's Chores</h2>
+                <ul class="chores-list" id="chores-list"></ul>
+            </section>
+
+            <section class="news-section">
+                <div class="news-category">
+                    <h3>World News</h3>
+                    <div class="news-ticker" id="news-world"></div>
+                </div>
+                <div class="news-category">
+                    <h3>Tech News</h3>
+                    <div class="news-ticker" id="news-tech"></div>
                 </div>
             </section>
         </main>
@@ -62,6 +87,18 @@
     </div>
 
     <script>
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        const weatherCodes = {
+            0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+            45: '🌫️', 48: '🌫️',
+            51: '🌧️', 53: '🌧️', 55: '🌧️',
+            61: '🌧️', 63: '🌧️', 65: '🌧️',
+            71: '🌨️', 73: '🌨️', 75: '🌨️',
+            80: '🌦️', 81: '🌦️', 82: '🌦️',
+            95: '⛈️', 96: '⛈️'
+        };
+
         function updateStats() {
             fetch('/stats')
                 .then(r => r.json())
@@ -83,13 +120,54 @@
                     document.getElementById('temp').textContent = data.temp;
                     document.getElementById('condition').textContent = data.condition;
                     document.getElementById('wind').textContent = data.wind;
+                    
+                    const forecast = document.getElementById('forecast');
+                    forecast.innerHTML = data.forecast.map(f => 
+                        `<div class="forecast-hour"><span class="f-time">${f.time}</span><span class="f-icon">${weatherCodes[f.code] || '🌡️'}</span><span class="f-temp">${f.temp}°</span></div>`
+                    ).join('');
+                });
+        }
+
+        function updateNews() {
+            fetch('/news')
+                .then(r => r.json())
+                .then(data => {
+                    const world = data.articles.filter(a => a.category === 'world');
+                    const tech = data.articles.filter(a => a.category === 'tech');
+                    
+                    document.getElementById('news-world').innerHTML = world.map(a => 
+                        `<a href="${a.link}" target="_blank" class="news-item">${a.title}</a>`
+                    ).join('');
+                    
+                    document.getElementById('news-tech').innerHTML = tech.map(a => 
+                        `<a href="${a.link}" target="_blank" class="news-item">${a.title}</a>`
+                    ).join('');
+                });
+        }
+
+        function updateChores() {
+            fetch('/chores')
+                .then(r => r.json())
+                .then(data => {
+                    const section = document.getElementById('chores-section');
+                    const list = document.getElementById('chores-list');
+                    
+                    if (data.chores.length > 0) {
+                        section.style.display = 'block';
+                        list.innerHTML = data.chores.map(c => `<li>${c}</li>`).join('');
+                    } else {
+                        section.style.display = 'none';
+                    }
                 });
         }
 
         updateStats();
         updateWeather();
+        updateNews();
+        updateChores();
         setInterval(updateStats, 3000);
-        setInterval(updateWeather, 60000);
+        setInterval(updateWeather, 300000);
+        setInterval(updateNews, 300000);
     </script>
 </body>
 </html>
