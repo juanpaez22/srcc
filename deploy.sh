@@ -4,14 +4,16 @@
 cd ~/dev/srcc || exit 1
 
 echo "Pulling latest from GitHub..."
-git pull origin master
+git pull origin master || { echo "Git pull failed"; exit 1; }
 
 echo "Killing existing server..."
-pkill -f "python3.*app.py" 2>/dev/null
+sudo pkill -f "python3.*app.py" 2>/dev/null
+sleep 2
 
 echo "Starting server..."
+cd ~/dev/srcc
 nohup sudo python3 app.py > app.log 2>&1 &
-sleep 2
+sleep 3
 
 if pgrep -f "python3.*app.py" > /dev/null; then
     echo "Server started successfully!"
