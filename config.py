@@ -14,7 +14,6 @@ NEWS_FEEDS = {
         "title": "World News",
         "feeds": [
             "https://feeds.bbci.co.uk/news/world/rss.xml",
-            "https://feeds.reuters.com/reuters/topNews",
             "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
         ]
     },
