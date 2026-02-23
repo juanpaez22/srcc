@@ -25,7 +25,7 @@ def save_data(data):
 
 def get_weather():
     try:
-        url = f"https://api.open-meteo.com/v1/forecast?latitude={WEATHER_LAT}&longitude={WEATHER_LON}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&forecast_days=1"
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={WEATHER_LAT}&longitude={WEATHER_LON}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&forecast_days=2&timezone=America/Los_Angeles"
         resp = requests.get(url, timeout=5)
         data = resp.json()
         
@@ -44,18 +44,21 @@ def get_weather():
         forecast = []
         
         # Show the next 6 hours from now
-        # Note: Open-Meteo hourly data starts at midnight UTC, so we get early morning hours
+        # Times from API are now in local Pacific time
         for i, t in enumerate(hourly_times):
-            dt_utc = datetime.fromisoformat(t.replace('Z', '+00:00'))
-            dt_pacific = dt_utc.astimezone(PACIFIC_TZ)
-            temp_c = hourly_temps[i] if i < len(hourly_temps) else 0
-            forecast.append({
-                'time': dt_pacific.strftime('%I %p'),
-                'temp': round(temp_c * 9/5 + 32),
-                'code': hourly_codes[i] if i < len(hourly_codes) else 0
-            })
-            if len(forecast) >= 6:
-                break
+            dt_local = datetime.fromisoformat(t)
+            dt_local = PACIFIC_TZ.localize(dt_local)
+            
+            # Only include hours that are >= now
+            if dt_local >= now_pacific:
+                temp_c = hourly_temps[i] if i < len(hourly_temps) else 0
+                forecast.append({
+                    'time': dt_local.strftime('%I %p'),
+                    'temp': round(temp_c * 9/5 + 32),
+                    'code': hourly_codes[i] if i < len(hourly_codes) else 0
+                })
+                if len(forecast) >= 6:
+                    break
         
         conditions = {
             0: "Clear", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
