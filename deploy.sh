@@ -11,8 +11,6 @@ sudo pkill -f "python3.*app.py" 2>/dev/null
 sleep 2
 
 echo "Starting server..."
-cd ~/dev/srcc
-chmod +x deploy.sh
 nohup sudo python3 app.py > app.log 2>&1 &
 sleep 3
 
