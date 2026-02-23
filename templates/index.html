@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stone Ranch Command Center</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <svg class="cow-icon" viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="50" cy="45" rx="35" ry="25" fill="#CC5500"/>
+                    <ellipse cx="50" cy="40" rx="30" ry="20" fill="#D2691E"/>
+                    <ellipse cx="50" cy="35" rx="25" ry="15" fill="#E8A962"/>
+                    <ellipse cx="30" cy="20" rx="12" ry="10" fill="#CC5500"/>
+                    <ellipse cx="70" cy="20" rx="12" ry="10" fill="#CC5500"/>
+                    <circle cx="40" cy="32" r="3" fill="#2D1810"/>
+                    <circle cx="60" cy="32" r="3" fill="#2D1810"/>
+                    <ellipse cx="50" cy="42" rx="5" ry="3" fill="#2D1810"/>
+                    <ellipse cx="85" cy="45" rx="8" ry="12" fill="#CC5500"/>
+                    <ellipse cx="15" cy="45" rx="8" ry="12" fill="#CC5500"/>
+                </svg>
+            </div>
+            <h1>Welcome to Stone Ranch</h1>
+        </header>
+
+        <main class="main-content">
+            <section class="card weather-card">
+                <h2>Kirkland Weather</h2>
+                <div class="weather-content">
+                    <div class="weather-main">
+                        <span class="temp" id="temp">--</span>
+                        <span class="degree">°F</span>
+                    </div>
+                    <div class="weather-details">
+                        <span class="condition" id="condition">Loading...</span>
+                        <span class="wind">Wind: <span id="wind">--</span> mph</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="telemetry">
+            <h3>System Status</h3>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-label">CPU</span>
+                    <span class="stat-value" id="cpu">--%</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Memory</span>
+                    <span class="stat-value" id="memory">--%</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Updated</span>
+                    <span class="stat-value" id="time">--:--:--</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        function updateStats() {
+            fetch('/stats')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('cpu').textContent = data.cpu + '%';
+                    document.getElementById('memory').textContent = data.memory + '%';
+                    document.getElementById('time').textContent = data.time;
+                });
+        }
+
+        function updateWeather() {
+            fetch('/weather')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('condition').textContent = 'Error';
+                        return;
+                    }
+                    document.getElementById('temp').textContent = data.temp;
+                    document.getElementById('condition').textContent = data.condition;
+                    document.getElementById('wind').textContent = data.wind;
+                });
+        }
+
+        updateStats();
+        updateWeather();
+        setInterval(updateStats, 3000);
+        setInterval(updateWeather, 60000);
+    </script>
+</body>
+</html>

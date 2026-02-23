@@ -1,108 +1,47 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template
 import psutil
 import time
+import requests
 
 app = Flask(__name__)
 
-HTML_PAGE = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Stone Ranch Command Center</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #1a1a2e;
-            color: #eee;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .container {
-            text-align: center;
-            background: #16213e;
-            padding: 40px 60px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-        h1 {
-            margin: 0 0 30px 0;
-            font-size: 28px;
-            color: #e94560;
-        }
-        .stat {
-            margin: 20px 0;
-            font-size: 18px;
-        }
-        .value {
-            font-size: 48px;
-            font-weight: bold;
-            color: #0f3460;
-            background: #eee;
-            padding: 10px 20px;
-            border-radius: 8px;
-            display: inline-block;
-            min-width: 120px;
-        }
-        .label {
-            display: block;
-            font-size: 14px;
-            color: #888;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .updated {
-            margin-top: 30px;
-            font-size: 12px;
-            color: #555;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Stone Ranch Command Center</h1>
-        
-        <div class="stat">
-            <span class="label">CPU Usage</span>
-            <div class="value" id="cpu">{{ cpu }}%</div>
-        </div>
-        
-        <div class="stat">
-            <span class="label">Memory Usage</span>
-            <div class="value" id="mem">{{ memory }}%</div>
-        </div>
-        
-        <div class="updated">
-            Last updated: <span id="time">{{ time }}</span>
-        </div>
-    </div>
+KIRKLAND_LAT = 47.6769
+KIRKLAND_LON = -122.2060
 
-    <script>
-        function updateStats() {
-            fetch('/stats')
-                .then(r => r.json())
-                .then(data => {
-                    document.getElementById('cpu').textContent = data.cpu + '%';
-                    document.getElementById('mem').textContent = data.memory + '%';
-                    document.getElementById('time').textContent = data.time;
-                });
+def get_weather():
+    try:
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={KIRKLAND_LAT}&longitude={KIRKLAND_LON}&current=temperature_2m,weather_code,wind_speed_10m"
+        resp = requests.get(url, timeout=5)
+        data = resp.json()
+        current = data.get('current', {})
+        
+        temp_f = round(current.get('temperature_2m', 0) * 9/5 + 32)
+        wind = current.get('wind_speed_10m', 0)
+        code = current.get('weather_code', 0)
+        
+        conditions = {
+            0: "Clear",
+            1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
+            45: "Fog", 48: "Fog",
+            51: "Drizzle", 53: "Drizzle", 55: "Drizzle",
+            61: "Rain", 63: "Rain", 65: "Rain",
+            71: "Snow", 73: "Snow", 75: "Snow",
+            80: "Showers", 81: "Showers", 82: "Showers",
+            95: "Thunderstorm", 96: "Thunderstorm"
         }
         
-        updateStats();
-        setInterval(updateStats, 2000);
-    </script>
-</body>
-</html>
-"""
+        return {
+            'temp': temp_f,
+            'condition': conditions.get(code, "Unknown"),
+            'wind': round(wind * 0.621371),
+            'error': None
+        }
+    except Exception as e:
+        return {'temp': '--', 'condition': '--', 'wind': '--', 'error': str(e)}
 
 @app.route('/')
 def index():
-    return render_template_string(HTML_PAGE, cpu=0, memory=0, time='--')
+    return render_template('index.html')
 
 @app.route('/stats')
 def stats():
@@ -111,6 +50,10 @@ def stats():
         'memory': psutil.virtual_memory().percent,
         'time': time.strftime('%H:%M:%S')
     }
+
+@app.route('/weather')
+def weather():
+    return get_weather()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=True)
