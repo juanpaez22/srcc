@@ -3,8 +3,8 @@
 ## High Priority
 - [ ] Fix world news sources - verify Reuters and NYT are loading properly
 - [ ] Verify chores persistence works across Pi reboots (data.json)
-- [ ] Add chores to dashboard - they're not showing up currently
-- [ ] Add source display for world news (like tech news has)
+- [x] Add chores to dashboard - FIXED: config used "frequency" but app expected "schedule"
+- [x] Add source display for world news (like tech news has) - ALREADY IMPLEMENTED
 
 ## Medium Priority
 - [ ] Bills/expenses tracker - scrape credit cards or manually input monthly bills for spending overview

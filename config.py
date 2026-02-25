@@ -34,10 +34,12 @@ REFRESH_INTERVAL_NEWS = 300000     # 5 minutes
 REFRESH_INTERVAL_STOCKS = 60000    # 1 minute
 
 # Default chores (used if data.json has none)
+# schedule: daily, weekly, monthly, yearly, onetime
+# schedule_param: for weekly="weeks,day" (e.g., "1,0"=every Mon), monthly=day(1-31), yearly="mm-dd", onetime="yyyy-mm-dd"
 DEFAULT_CHORES = [
-    {"name": "Check weather station", "frequency": "daily"},
-    {"name": "Review security cameras", "frequency": "daily"},
-    {"name": "Backup system logs", "frequency": "weekly"},
-    {"name": "Check smoke detectors", "frequency": "monthly"},
-    {"name": "Clean solar panels", "frequency": "weekly"}
+    {"name": "Check weather station", "schedule": "daily", "schedule_param": ""},
+    {"name": "Review security cameras", "schedule": "daily", "schedule_param": ""},
+    {"name": "Backup system logs", "schedule": "weekly", "schedule_param": "1,6"},
+    {"name": "Check smoke detectors", "schedule": "monthly", "schedule_param": "1"},
+    {"name": "Clean solar panels", "schedule": "weekly", "schedule_param": "1,0"}
 ]
