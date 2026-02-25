@@ -660,5 +660,58 @@ def life_social():
     
     return jsonify(data.get('social', {}))
 
+# Journaling system (git-ignored)
+JOURNAL_FILE = os.path.join(os.path.dirname(__file__), 'data', 'journal.json')
+
+JOURNAL_PROMPTS = [
+    "What went well today?",
+    "What challenged you?",
+    "What are you grateful for?",
+    "One thing you'd do differently tomorrow?",
+    "How's your energy/mood?"
+]
+
+def load_journal():
+    """Load journal entries"""
+    if os.path.exists(JOURNAL_FILE):
+        try:
+            with open(JOURNAL_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return {'version': '1.0', 'entries': []}
+
+def save_journal(data):
+    """Save journal entries"""
+    os.makedirs(os.path.dirname(JOURNAL_FILE), exist_ok=True)
+    with open(JOURNAL_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+
+@app.route('/journal')
+def journal():
+    """Get all journal entries"""
+    return load_journal()
+
+@app.route('/journal/prompts')
+def journal_prompts():
+    """Get rotating journal prompts"""
+    today_idx = datetime.now().toordinal() % len(JOURNAL_PROMPTS)
+    return {'prompts': JOURNAL_PROMPTS, 'today': JOURNAL_PROMPTS[today_idx]}
+
+@app.route('/journal', methods=['POST'])
+def journal_entry():
+    """Add a journal entry"""
+    data = load_journal()
+    
+    entry = {
+        'date': request.json.get('date', datetime.now().strftime('%Y-%m-%d')),
+        'prompt': request.json.get('prompt', ''),
+        'text': request.json.get('text', ''),
+        'mood': request.json.get('mood')  # optional 1-10
+    }
+    data['entries'].append(entry)
+    save_journal(data)
+    return jsonify({'success': True, 'entry': entry})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=False)
