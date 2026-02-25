@@ -87,6 +87,65 @@ def calculate_streak(workouts, target=4):
         'weekly_progress_pct': min(100, int(week_count / target * 100))
     }
 
+def calculate_achievements(workouts):
+    """Calculate achievements/badges based on workout history.
+    Returns list of unlocked achievements with details."""
+    if not workouts:
+        return []
+    
+    achievements = []
+    total_workouts = len(workouts)
+    
+    # Get unique dates
+    workout_dates = sorted(set(w.get('date', '')[:10] for w in workouts), reverse=True)
+    
+    # Calculate longest streak
+    longest_streak = 0
+    current_streak = 0
+    prev_date = None
+    
+    for d in workout_dates:
+        if prev_date:
+            diff = (prev_date - datetime.strptime(d, '%Y-%m-%d').date()).days
+            if diff == 1:
+                current_streak += 1
+            else:
+                longest_streak = max(longest_streak, current_streak)
+                current_streak = 1
+        else:
+            current_streak = 1
+        prev_date = datetime.strptime(d, '%Y-%m-%d').date()
+    longest_streak = max(longest_streak, current_streak)
+    
+    # Achievement definitions
+    badges = [
+        {'id': 'first_workout', 'name': 'First Step', 'desc': 'Completed your first workout', 'icon': '🌱', 'condition': total_workouts >= 1},
+        {'id': 'five_workouts', 'name': 'Getting Started', 'desc': 'Completed 5 workouts', 'icon': '💪', 'condition': total_workouts >= 5},
+        {'id': 'ten_workouts', 'name': 'Consistent', 'desc': 'Completed 10 workouts', 'icon': '🔥', 'condition': total_workouts >= 10},
+        {'id': 'twenty_workouts', 'name': 'Dedicated', 'desc': 'Completed 20 workouts', 'icon': '⭐', 'condition': total_workouts >= 20},
+        {'id': 'fifty_workouts', 'name': 'Beast Mode', 'desc': 'Completed 50 workouts', 'icon': '🦍', 'condition': total_workouts >= 50},
+        {'id': 'streak_3', 'name': '3-Day Streak', 'desc': '3 days in a row', 'icon': '🎯', 'condition': longest_streak >= 3},
+        {'id': 'streak_7', 'name': 'Week Warrior', 'desc': '7 days in a row', 'icon': '🗓️', 'condition': longest_streak >= 7},
+        {'id': 'streak_14', 'name': 'Fortnight Fighter', 'desc': '14 days in a row', 'icon': '🛡️', 'condition': longest_streak >= 14},
+        {'id': 'streak_30', 'name': 'Monthly Master', 'desc': '30 days in a row', 'icon': '👑', 'condition': longest_streak >= 30},
+    ]
+    
+    for badge in badges:
+        if badge['condition']:
+            achievements.append({
+                'id': badge['id'],
+                'name': badge['name'],
+                'desc': badge['desc'],
+                'icon': badge['icon']
+            })
+    
+    return {
+        'achievements': achievements,
+        'total_workouts': total_workouts,
+        'longest_streak': longest_streak,
+        'next_badge': next((b for b in badges if not b['condition']), None)
+    }
+
 def get_weather():
     try:
         url = f"https://api.open-meteo.com/v1/forecast?latitude={WEATHER_LAT}&longitude={WEATHER_LON}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&forecast_days=2&timezone=America/Los_Angeles"
@@ -820,9 +879,11 @@ def life_streaks():
     target = fitness.get('goals', {}).get('weekly_gym_target', 4)
     
     streak = calculate_streak(workouts, target)
+    achievements = calculate_achievements(workouts)
     
     return jsonify({
         'fitness': streak,
+        'achievements': achievements,
         'goals': fitness.get('goals', {})
     })
 
