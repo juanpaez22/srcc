@@ -1,4 +1,25 @@
  * Serving Flask app 'app'
  * Debug mode: off
-Address already in use
-Port 80 is in use by another program. Either identify and stop that program, or start the server with a different port.
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:80
+ * Running on http://192.168.1.53:80
+[33mPress CTRL+C to quit[0m
+192.168.1.14 - - [24/Feb/2026 23:36:52] "GET / HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:36:52] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+192.168.1.14 - - [24/Feb/2026 23:36:52] "[36mGET /static/longhorn.png HTTP/1.1[0m" 304 -
+192.168.1.14 - - [24/Feb/2026 23:36:53] "GET /digest HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:36:53] "GET /chores HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:36:53] "GET /stats HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:36:55] "GET /stats HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:36:58] "GET /stats HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:36:59] "GET /weather HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:37:00] "GET /stocks HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:37:01] "GET /stats HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:37:04] "GET /stats HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:37:07] "GET /stats HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:37:10] "GET /stats HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:37:13] "GET /stats HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:37:16] "GET /stats HTTP/1.1" 200 -
+192.168.1.14 - - [24/Feb/2026 23:37:19] "GET /stats HTTP/1.1" 200 -
+127.0.0.1 - - [24/Feb/2026 23:46:57] "HEAD / HTTP/1.1" 200 -

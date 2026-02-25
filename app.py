@@ -23,6 +23,31 @@ def save_data(data):
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f)
 
+# Life data (fitness, mood, learning, social) - git-ignored
+LIFE_FILE = os.path.join(os.path.dirname(__file__), 'data', 'life.json')
+
+def load_life_data():
+    """Load personal life tracking data (fitness, mood, learning, social)"""
+    if os.path.exists(LIFE_FILE):
+        try:
+            with open(LIFE_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return {
+        'version': '1.0',
+        'fitness': {'workouts': [], 'goals': {'weekly_gym_target': 4, 'primary': 'Build strength and muscle mass'}},
+        'mood': {'entries': []},
+        'learning': {'books': [], 'courses': [], 'skills': []},
+        'social': {'interactions': []}
+    }
+
+def save_life_data(data):
+    """Save personal life tracking data"""
+    os.makedirs(os.path.dirname(LIFE_FILE), exist_ok=True)
+    with open(LIFE_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+
 def get_weather():
     try:
         url = f"https://api.open-meteo.com/v1/forecast?latitude={WEATHER_LAT}&longitude={WEATHER_LON}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&forecast_days=2&timezone=America/Los_Angeles"
@@ -554,6 +579,86 @@ def delete_chore(index):
         data['chores'].pop(index)
         save_data(data)
     return redirect(url_for('chores_page'))
+
+# Life tracking endpoints (fitness, mood, learning, social)
+@app.route('/life')
+def life():
+    """Get all life data"""
+    return load_life_data()
+
+@app.route('/life/fitness', methods=['GET', 'POST'])
+def life_fitness():
+    """Log or get fitness data"""
+    data = load_life_data()
+    
+    if request.method == 'POST':
+        workout = {
+            'date': request.json.get('date', datetime.now().strftime('%Y-%m-%d')),
+            'type': request.json.get('type', 'gym'),
+            'duration': request.json.get('duration'),
+            'notes': request.json.get('notes', '')
+        }
+        data['fitness']['workouts'].append(workout)
+        save_life_data(data)
+        return jsonify({'success': True, 'workout': workout})
+    
+    return jsonify(data.get('fitness', {}))
+
+@app.route('/life/mood', methods=['GET', 'POST'])
+def life_mood():
+    """Log or get mood data"""
+    data = load_life_data()
+    
+    if request.method == 'POST':
+        entry = {
+            'date': request.json.get('date', datetime.now().strftime('%Y-%m-%d')),
+            'mood': request.json.get('mood'),  # 1-10 scale
+            'notes': request.json.get('notes', '')
+        }
+        data['mood']['entries'].append(entry)
+        save_life_data(data)
+        return jsonify({'success': True, 'entry': entry})
+    
+    return jsonify(data.get('mood', {}))
+
+@app.route('/life/learning', methods=['GET', 'POST'])
+def life_learning():
+    """Log or get learning data"""
+    data = load_life_data()
+    
+    if request.method == 'POST':
+        item = {
+            'date': request.json.get('date', datetime.now().strftime('%Y-%m-%d')),
+            'type': request.json.get('type', 'book'),  # book, course, skill
+            'title': request.json.get('title'),
+            'notes': request.json.get('notes', '')
+        }
+        item_type = item['type'] + 's'  # books, courses, skills
+        if item_type not in data['learning']:
+            data['learning'][item_type] = []
+        data['learning'][item_type].append(item)
+        save_life_data(data)
+        return jsonify({'success': True, 'item': item})
+    
+    return jsonify(data.get('learning', {}))
+
+@app.route('/life/social', methods=['GET', 'POST'])
+def life_social():
+    """Log or get social data"""
+    data = load_life_data()
+    
+    if request.method == 'POST':
+        interaction = {
+            'date': request.json.get('date', datetime.now().strftime('%Y-%m-%d')),
+            'type': request.json.get('type', 'friend'),  # family, friend, colleague
+            'with': request.json.get('with'),
+            'notes': request.json.get('notes', '')
+        }
+        data['social']['interactions'].append(interaction)
+        save_life_data(data)
+        return jsonify({'success': True, 'interaction': interaction})
+    
+    return jsonify(data.get('social', {}))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=False)
