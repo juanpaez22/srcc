@@ -32,3 +32,12 @@ REFRESH_INTERVAL_STATS = 3000
 REFRESH_INTERVAL_WEATHER = 300000  # 5 minutes
 REFRESH_INTERVAL_NEWS = 300000     # 5 minutes
 REFRESH_INTERVAL_STOCKS = 60000    # 1 minute
+
+# Default chores (used if data.json has none)
+DEFAULT_CHORES = [
+    {"name": "Check weather station", "frequency": "daily"},
+    {"name": "Review security cameras", "frequency": "daily"},
+    {"name": "Backup system logs", "frequency": "weekly"},
+    {"name": "Check smoke detectors", "frequency": "monthly"},
+    {"name": "Clean solar panels", "frequency": "weekly"}
+]

@@ -6,7 +6,7 @@ import json
 import os
 from datetime import datetime, timedelta, timezone
 import pytz
-from config import WEATHER_LAT, WEATHER_LON, WEATHER_CITY, NEWS_FEEDS, STOCKS
+from config import WEATHER_LAT, WEATHER_LON, WEATHER_CITY, NEWS_FEEDS, STOCKS, DEFAULT_CHORES
 
 app = Flask(__name__)
 
@@ -239,13 +239,16 @@ def get_stocks():
 
 def get_today_chores():
     data = load_data()
+    # Use default chores if none defined in data.json
+    chores_data = data.get('chores', []) or DEFAULT_CHORES
+    
     today = datetime.now()
     today_str = today.strftime('%Y-%m-%d')
     today_dow = today.weekday()  # 0=Monday, 6=Sunday
     today_dom = today.day
     
     chores = []
-    for chore in data.get('chores', []):
+    for chore in chores_data:
         schedule = chore.get('schedule', 'daily')
         schedule_param = chore.get('schedule_param', '')
         last_done = chore.get('last_done', '')
@@ -310,13 +313,16 @@ def get_today_chores():
 def get_overdue_chores():
     """Get chores that were due but not completed"""
     data = load_data()
+    # Use default chores if none defined in data.json
+    chores_data = data.get('chores', []) or DEFAULT_CHORES
+    
     today = datetime.now()
     today_str = today.strftime('%Y-%m-%d')
     today_dow = today.weekday()
     today_dom = today.day
     
     overdue = []
-    for chore in data.get('chores', []):
+    for chore in chores_data:
         # Skip if already done today
         if chore.get('last_done', '') == today_str:
             continue
