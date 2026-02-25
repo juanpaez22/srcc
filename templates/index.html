@@ -74,12 +74,8 @@
 
             <section class="news-section">
                 <div class="news-category">
-                    <h3>World News</h3>
-                    <div class="news-ticker" id="news-world"></div>
-                </div>
-                <div class="news-category">
-                    <h3>Tech News</h3>
-                    <div class="news-ticker" id="news-tech"></div>
+                    <h3>📰 Daily Digest</h3>
+                    <div class="news-ticker" id="news-digest"></div>
                 </div>
             </section>
         </main>
@@ -98,6 +94,10 @@
                 <div class="stat-box">
                     <span class="stat-label">Updated</span>
                     <span class="stat-value" id="time">--:--:--</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Last Bevo Tend</span>
+                    <span class="stat-value" id="last_tend">--</span>
                 </div>
             </div>
         </footer>
@@ -123,6 +123,7 @@
                     document.getElementById('cpu').textContent = data.cpu + '%';
                     document.getElementById('memory').textContent = data.memory + '%';
                     document.getElementById('time').textContent = data.time;
+                    document.getElementById('last_tend').textContent = data.last_tend_time || 'Never';
                 });
         }
 
@@ -165,19 +166,23 @@
         }
 
         function updateNews() {
-            fetch('/news')
+            fetch('/digest')
                 .then(r => r.json())
                 .then(data => {
-                    const world = data.articles.filter(a => a.category === 'world');
-                    const tech = data.articles.filter(a => a.category === 'tech');
+                    if (data.error || !data.themes) {
+                        document.getElementById('news-digest').innerHTML = '<span>Unable to load digest</span>';
+                        return;
+                    }
                     
-                    document.getElementById('news-world').innerHTML = world.map(a => 
-                        `<a href="${a.link}" target="_blank" class="news-item">${a.title}</a>`
-                    ).join('');
-                    
-                    document.getElementById('news-tech').innerHTML = tech.map(a => 
-                        `<a href="${a.link}" target="_blank" class="news-item">${a.title} <span class="news-source">(${a.source})</span></a>`
-                    ).join('');
+                    let html = '';
+                    data.themes.forEach(theme => {
+                        html += `<div class="digest-theme"><h4>${theme.theme}</h4><ul>`;
+                        theme.headlines.forEach(h => {
+                            html += `<li><a href="${h.link}" target="_blank" class="news-item">${h.title}</a> <span class="news-source">(${h.source})</span></li>`;
+                        });
+                        html += '</ul></div>';
+                    });
+                    document.getElementById('news-digest').innerHTML = html;
                 });
         }
 
