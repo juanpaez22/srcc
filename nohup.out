@@ -1,0 +1,34 @@
+🐈 Starting nanobot gateway on port 18790...
+2026-02-24 20:12:11.107 | INFO     | nanobot.channels.manager:_init_channels:46 - Telegram channel enabled
+✓ Channels enabled: telegram
+✓ Cron: 7 scheduled jobs
+✓ Heartbeat: every 1800s
+2026-02-24 20:12:11.238 | INFO     | nanobot.cron.service:start:174 - Cron service started with 7 jobs
+2026-02-24 20:12:11.238 | INFO     | nanobot.heartbeat.service:start:119 - Heartbeat started (every 1800s)
+2026-02-24 20:12:11.239 | INFO     | nanobot.agent.loop:run:244 - Agent loop started
+2026-02-24 20:12:11.239 | INFO     | nanobot.channels.manager:start_all:159 - Starting telegram channel...
+2026-02-24 20:12:11.240 | INFO     | nanobot.channels.manager:_dispatch_outbound:187 - Outbound dispatcher started
+2026-02-24 20:12:11.309 | INFO     | nanobot.channels.telegram:start:160 - Starting Telegram bot (polling mode)...
+2026-02-24 20:12:12.357 | INFO     | nanobot.channels.telegram:start:168 - Telegram bot @stone_ranch_bevo_bot connected
+2026-02-24 20:12:12.655 | DEBUG    | nanobot.channels.telegram:start:172 - Telegram bot commands registered
+2026-02-24 20:12:26.244 | DEBUG    | nanobot.channels.telegram:_on_message:397 - Telegram message from 8717423252|juanpaez22: Ok, I updated the github auth to allow you to push...
+2026-02-24 20:12:26.249 | INFO     | nanobot.agent.loop:_process_message:323 - Processing message from telegram:8717423252|juanpaez22: Ok, I updated the github auth to allow you to push your changes to srcc only. Yo...
+2026-02-24 20:12:26.353 | INFO     | nanobot.agent.memory:consolidate:95 - Memory consolidation: 69 to consolidate, 50 keep
+2026-02-24 20:12:38.684 | INFO     | nanobot.agent.loop:_run_agent_loop:222 - Tool call: exec({"command": "cd /home/juanpaez/.nanobot/workspace/dev/srcc && git status"})
+2026-02-24 20:12:41.478 | INFO     | nanobot.agent.loop:_run_agent_loop:222 - Tool call: exec({"command": "cd /home/juanpaez/.nanobot/workspace/dev/srcc && git diff templates/index.html"})
+2026-02-24 20:12:44.833 | INFO     | nanobot.agent.loop:_run_agent_loop:222 - Tool call: exec({"command": "cd /home/juanpaez/.nanobot/workspace/dev/srcc && git add templates/index.html && git commit -m \"Dashboard: Show AI digest instead of separate world/tech news\""})
+2026-02-24 20:12:47.613 | INFO     | nanobot.agent.loop:_run_agent_loop:222 - Tool call: exec({"command": "cd /home/juanpaez/.nanobot/workspace/dev/srcc && git push origin master"})
+2026-02-24 20:12:58.585 | INFO     | nanobot.agent.loop:_run_agent_loop:222 - Tool call: exec({"command": "curl -s http://localhost/stats"})
+2026-02-24 20:13:00.230 | INFO     | nanobot.agent.memory:consolidate:146 - Memory consolidation done: 331 messages, last_consolidated=281
+2026-02-24 20:13:03.585 | INFO     | nanobot.agent.loop:_run_agent_loop:222 - Tool call: exec({"command": "curl -s http://localhost/digest | python3 -c \"import sys,json; d=json.load(sys.stdin); print('Digest OK -', len(d.get('themes',[])), 'themes')\""})
+2026-02-24 20:13:12.744 | INFO     | nanobot.agent.loop:_process_message:411 - Response to telegram:8717423252|juanpaez22: System is healthy! Stats updating, digest working (5 themes). All good on the ranch tonight 🤠
+
+Quick kaizen note — the "...
+2026-02-24 20:22:00.002 | INFO     | nanobot.cron.service:_execute_job:239 - Cron: executing job 'Silent ranch maintenance. Do N' (972739f7)
+2026-02-24 20:22:00.003 | INFO     | nanobot.agent.loop:_process_message:323 - Processing message from telegram:user: Silent ranch maintenance. Do NOT message user. Pick one task from RANCH_TASKS.md...
+2026-02-24 20:22:11.131 | INFO     | nanobot.agent.loop:_run_agent_loop:222 - Tool call: read_file({"path": "/home/juanpaez/.nanobot/workspace/memory/RANCH_TASKS.md"})
+2026-02-24 20:22:14.499 | INFO     | nanobot.agent.loop:_run_agent_loop:222 - Tool call: read_file({"path": "/home/juanpaez/.nanobot/workspace/dev/srcc/templates/index.html"})
+2026-02-24 20:22:22.497 | INFO     | nanobot.agent.loop:_run_agent_loop:222 - Tool call: read_file({"path": "/home/juanpaez/.nanobot/workspace/dev/srcc/static/style.css"})
+2026-02-24 20:22:50.145 | INFO     | nanobot.agent.loop:_run_agent_loop:222 - Tool call: edit_file({"new_text": "/* News source */\n.news-source {\n    font-size: 0.7rem;\n    color: var(--tan);\n    font-style: italic;\n}\n\n/* Daily Digest - mobile friendly */\n.digest-theme {\n    flex: 1 1 300p)
+2026-02-24 20:22:55.297 | INFO     | nanobot.agent.loop:_run_agent_loop:222 - Tool call: edit_file({"new_text": ".news-ticker {\n    display: flex;\n    flex-wrap: wrap;\n    gap: 15px;\n    padding: 10px 0;\n    scrollbar-width: thin;\n    scrollbar-color: var(--burnt-orange) var(--dark-brown);\n})
+2026-02-24 20:23:00.073 | INFO     | nanobot.agent.loop:_run_agent_loop:222 - Tool call: exec({"command": "cd /home/juanpaez/.nanobot/workspace/dev/srcc && git add -A && git commit -m \"Fix: Daily digest mobile layout - wrap columns on iPhone\n\n- Added .digest-theme styles for themed clusters)

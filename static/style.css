@@ -286,6 +286,42 @@ body {
     font-style: italic;
 }
 
+/* Daily Digest - mobile friendly */
+.digest-theme {
+    flex: 1 1 300px;
+    min-width: 280px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid rgba(204, 85, 0, 0.3);
+}
+
+.digest-theme h4 {
+    color: var(--tan);
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(204, 85, 0, 0.3);
+}
+
+.digest-theme ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.digest-theme li {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(204, 85, 0, 0.15);
+}
+
+.digest-theme li:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
 /* Simplified Tracker Styles */
 .form-group {
     margin-bottom: 20px;
@@ -409,8 +445,8 @@ input[type="range"] {
 
 .news-ticker {
     display: flex;
+    flex-wrap: wrap;
     gap: 15px;
-    overflow-x: auto;
     padding: 10px 0;
     scrollbar-width: thin;
     scrollbar-color: var(--burnt-orange) var(--dark-brown);
