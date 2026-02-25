@@ -82,6 +82,7 @@ def get_weather():
         return {'temp': '--', 'condition': '--', 'wind': '--', 'city': WEATHER_CITY, 'forecast': [], 'error': str(e)}
 
 def get_news():
+    """Fetch news from RSS feeds, handling both RSS and Atom formats."""
     articles = []
     seen_titles = set()
     
@@ -106,22 +107,35 @@ def get_news():
                     source = "Wired"
                 
                 import re
+                
+                # Try RSS <item> first, then Atom <entry>
                 items = re.findall(r'<item>(.*?)</item>', content, re.DOTALL)
+                if not items:
+                    items = re.findall(r'<entry>(.*?)</entry>', content, re.DOTALL)
                 
                 for item in items[:8]:
+                    # Handle both RSS and Atom title formats
                     title_match = re.search(r'<title><!\[CDATA\[(.*?)\]\]></title>|<title>(.*?)</title>', item)
-                    link_match = re.search(r'<link>(.*?)</link>', item)
-                    pub_match = re.search(r'<pubDate>(.*?)</pubDate>', item)
+                    # Handle both RSS <link> and Atom <link href="...">
+                    link_match = re.search(r'<link>(.*?)</link>|<link href="([^"]+)"', item)
+                    pub_match = re.search(r'<pubDate>(.*?)</pubDate>|<published>(.*?)</published>', item)
                     
-                    title = (title_match.group(1) or title_match.group(2) or "No title").strip()
-                    link = link_match.group(1).strip() if link_match else "#"
-                    pub_date = pub_match.group(1).strip() if pub_match else ""
+                    title = (title_match.group(1) or title_match.group(2) or "No title").strip() if title_match else "No title"
+                    link = (link_match.group(1) or link_match.group(2) or "#").strip() if link_match else "#"
+                    pub_date = (pub_match.group(1) or pub_match.group(2) or "").strip() if pub_match else ""
                     
                     if title not in seen_titles and len(articles) < 20:
                         try:
-                            pub_dt = datetime.strptime(pub_date[:25], '%a, %d %b %Y %H:%M:%S')
-                            pub_dt = pub_dt.replace(tzinfo=None)
-                            if (datetime.now() - pub_dt).days <= 1:
+                            # Try multiple date formats (strip timezone for simpler parsing)
+                            pub_dt = None
+                            pub_clean = re.sub(r'[A-Z]{2,4}$', '', pub_date[:25]).strip()
+                            for fmt in ['%a, %d %b %Y %H:%M:%S', '%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%dT%H:%M:%S']:
+                                try:
+                                    pub_dt = datetime.strptime(pub_clean, fmt)
+                                    break
+                                except:
+                                    continue
+                            if pub_dt and (datetime.now() - pub_dt.replace(tzinfo=None)).days <= 1:
                                 articles.append({
                                     'title': title[:75] + ('...' if len(title) > 75 else ''),
                                     'link': link,
@@ -135,6 +149,62 @@ def get_news():
                 continue
     
     return articles
+
+def get_ai_digest(cached=False):
+    """Generate an AI-style digest by clustering news into themes.
+    Uses extractive ranking - no external API needed. Pi-friendly.
+    If cached=True, reads from cache file."""
+    import re
+    
+    cache_file = os.path.join(os.path.dirname(__file__), 'digest_cache.json')
+    
+    if cached and os.path.exists(cache_file):
+        try:
+            with open(cache_file, 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    
+    articles = get_news()
+    if not articles:
+        return {'themes': [], 'error': 'No news available'}
+    
+    # Keywords for clustering
+    theme_keywords = {
+        'Politics & Government': ['trump', 'biden', 'congress', 'senate', 'white house', 'election', 'policy', 'government', 'parliament', 'minister'],
+        'Tech & AI': ['ai', 'artificial intelligence', 'tech', 'google', 'microsoft', 'apple', 'meta', 'facebook', 'amazon', 'startup', 'chip', 'semiconductor'],
+        'World': ['china', 'russia', 'ukraine', 'europe', 'middle east', 'war', 'military', 'nato', 'korea', 'india'],
+        'Business & Economy': ['economy', 'market', 'stock', 'inflation', 'fed', 'interest', 'trade', 'oil', 'energy', 'gas', 'price'],
+        'Science & Health': ['space', 'nasa', 'health', 'covid', 'vaccine', 'disease', 'cancer', 'climate', 'weather', 'storm'],
+    }
+    
+    # Assign articles to themes
+    themed = {theme: [] for theme in theme_keywords}
+    themed['Other'] = []
+    
+    for article in articles:
+        title_lower = article['title'].lower()
+        assigned = False
+        for theme, keywords in theme_keywords.items():
+            if any(kw in title_lower for kw in keywords):
+                themed[theme].append(article)
+                assigned = True
+                break
+        if not assigned:
+            themed['Other'].append(article)
+    
+    # Build digest with top headlines per theme
+    digest_themes = []
+    for theme, items in themed.items():
+        if items:
+            # Pick top 3 articles per theme
+            top_items = items[:3]
+            digest_themes.append({
+                'theme': theme,
+                'headlines': [{'title': a['title'], 'link': a['link'], 'source': a['source']} for a in top_items]
+            })
+    
+    return {'themes': digest_themes, 'error': None}
 
 def get_stocks():
     results = []
@@ -316,11 +386,21 @@ def index():
 
 @app.route('/stats')
 def stats():
+    data = load_data()
     return {
         'cpu': psutil.cpu_percent(),
         'memory': psutil.virtual_memory().percent,
-        'time': time.strftime('%H:%M:%S')
+        'time': time.strftime('%H:%M:%S'),
+        'last_tend_time': data.get('last_tend_time', '')
     }
+
+@app.route('/tend', methods=['POST'])
+def tend():
+    """Update the last Bevo tend time (heartbeat)"""
+    data = load_data()
+    data['last_tend_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    save_data(data)
+    return jsonify({'success': True, 'last_tend_time': data['last_tend_time']})
 
 @app.route('/weather')
 def weather():
@@ -329,6 +409,20 @@ def weather():
 @app.route('/news')
 def news():
     return {'articles': get_news()}
+
+@app.route('/digest')
+def digest():
+    """AI-style digest - grouped by themes (uses cached version)"""
+    return get_ai_digest(cached=True)
+
+@app.route('/digest-cache', methods=['POST'])
+def digest_cache():
+    """Generate and cache the digest (for cron job at 5am)"""
+    result = get_ai_digest(cached=False)
+    cache_file = os.path.join(os.path.dirname(__file__), 'digest_cache.json')
+    with open(cache_file, 'w') as f:
+        json.dump(result, f)
+    return jsonify({'success': True, 'cached_at': datetime.now().isoformat()})
 
 @app.route('/stocks')
 def stocks():
