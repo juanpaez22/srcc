@@ -48,6 +48,45 @@ def save_life_data(data):
     with open(LIFE_FILE, 'w') as f:
         json.dump(data, f, indent=2)
 
+def calculate_streak(workouts, target=4):
+    """Calculate current streak and weekly progress for gym/working out.
+    target: workouts per week for streak
+    Returns: {current_streak, weekly_count, weekly_target, weekly_progress_pct}"""
+    if not workouts:
+        return {'current_streak': 0, 'weekly_count': 0, 'weekly_target': target, 'weekly_progress_pct': 0}
+    
+    # Get dates of last 7 days
+    today = datetime.now().date()
+    week_dates = [(today - timedelta(days=i)).isoformat() for i in range(7)]
+    
+    # Count this week's workouts
+    week_count = sum(1 for w in workouts if w.get('date', '')[:10] in week_dates)
+    
+    # Calculate streak - count consecutive days going backwards from today
+    streak = 0
+    check_date = today
+    workout_dates = set(w.get('date', '')[:10] for w in workouts)
+    
+    while True:
+        date_str = check_date.isoformat()
+        if date_str in workout_dates:
+            streak += 1
+            check_date -= timedelta(days=1)
+        elif check_date == today:
+            # Today doesn't count yet, check yesterday
+            check_date -= timedelta(days=1)
+        else:
+            break
+        if streak > 365:  # Safety limit
+            break
+    
+    return {
+        'current_streak': streak,
+        'weekly_count': week_count,
+        'weekly_target': target,
+        'weekly_progress_pct': min(100, int(week_count / target * 100))
+    }
+
 def get_weather():
     try:
         url = f"https://api.open-meteo.com/v1/forecast?latitude={WEATHER_LAT}&longitude={WEATHER_LON}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&forecast_days=2&timezone=America/Los_Angeles"
@@ -712,6 +751,80 @@ def journal_entry():
     data['entries'].append(entry)
     save_journal(data)
     return jsonify({'success': True, 'entry': entry})
+
+# Push-model natural language logging
+@app.route('/log', methods=['POST'])
+def log_activity():
+    """Parse natural language and log to appropriate life category.
+    Gateway calls this for messages like 'I went to the gym', 'feeling great', etc."""
+    text = (request.json.get('text', '') or '').lower()
+    if not text:
+        return jsonify({'success': False, 'error': 'No text provided'})
+    
+    today = datetime.now().strftime('%Y-%m-%d')
+    logged = []
+    
+    life = load_life_data()
+    
+    # Fitness keywords
+    fitness_kw = ['gym', 'workout', 'lift', 'ran', 'run', 'soccer', 'tennis', 'exercise', 'training', 'push day', 'leg day']
+    if any(kw in text for kw in fitness_kw):
+        workout = {
+            'date': today,
+            'type': 'gym' if 'gym' in text or 'lift' in text else ('run' if 'run' in text else 'workout'),
+            'duration': 60,  # default
+            'notes': text[:100]
+        }
+        life['fitness']['workouts'].append(workout)
+        logged.append(f"workout logged")
+    
+    # Mood keywords
+    mood_kw = {'great': 9, 'good': 7, 'okay': 5, 'meh': 4, 'bad': 2, 'terrible': 1, 'awesome': 10, 'amazing': 10}
+    for kw, val in mood_kw.items():
+        if kw in text:
+            entry = {'date': today, 'mood': val, 'notes': text[:100]}
+            life['mood']['entries'].append(entry)
+            logged.append(f"mood: {val}/10")
+            break
+    
+    # Learning keywords
+    learn_kw = ['read', 'book', 'course', 'learned', 'studied', 'article']
+    if any(kw in text for kw in learn_kw):
+        item = {'date': today, 'type': 'book' if 'book' in text else 'article', 'title': text[:50], 'notes': ''}
+        if 'books' not in life['learning']:
+            life['learning']['books'] = []
+        life['learning']['books'].append(item)
+        logged.append("learning item logged")
+    
+    # Social keywords
+    social_kw = ['hung out', 'met', 'call', 'dinner', 'lunch', 'coffee', 'friend', 'family']
+    if any(kw in text for kw in social_kw):
+        interaction = {'date': today, 'type': 'friend', 'with': text[:30], 'notes': ''}
+        life['social']['interactions'].append(interaction)
+        logged.append("social interaction logged")
+    
+    if logged:
+        save_life_data(life)
+        return jsonify({'success': True, 'logged': logged, 'message': f"Got it! {', '.join(logged)}"})
+    
+    return jsonify({'success': False, 'message': "Didn't recognize that activity. Try: 'went to gym', 'feeling great', 'read a book', 'hung out with friend'"})
+
+@app.route('/life/streaks')
+def life_streaks():
+    """Get streak info for fitness and other tracked activities"""
+    data = load_life_data()
+    fitness = data.get('fitness', {})
+    workouts = fitness.get('workouts', [])
+    
+    # Get weekly gym target (default 4)
+    target = fitness.get('goals', {}).get('weekly_gym_target', 4)
+    
+    streak = calculate_streak(workouts, target)
+    
+    return jsonify({
+        'fitness': streak,
+        'goals': fitness.get('goals', {})
+    })
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=False)

@@ -24,6 +24,46 @@ NEWS_FEEDS = {
             "https://www.theverge.com/rss/index.xml",
             "https://www.wired.com/feed/rss"
         ]
+    },
+    "sports": {
+        "title": "Sports",
+        "feeds": [
+            "https://www.espn.com/espn/rss/news",
+            "https://sports.yahoo.com/rss/",
+            "https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml"
+        ]
+    },
+    "soccer": {
+        "title": "Soccer",
+        "feeds": [
+            "https://www.goal.com/en-us/feeds/rss/news",
+            "https://www.espn.com/soccer/rss/_/league/all"
+        ]
+    }
+}
+
+# Team-specific feeds (for personalized digest)
+TEAM_FEEDS = {
+    "texas_longhorns": {
+        "name": "Texas Longhorns",
+        "search": "Texas Longhorns football",
+        "feeds": [
+            "https://www.espn.com/college-football/team/_/id/239/texas-longhorns"
+        ]
+    },
+    "man_united": {
+        "name": "Manchester United",
+        "search": "Manchester United",
+        "feeds": [
+            "https://www.manutd.com/rss/news"
+        ]
+    },
+    "real_madrid": {
+        "name": "Real Madrid",
+        "search": "Real Madrid",
+        "feeds": [
+            "https://www.realmadrid.com/en/rss"
+        ]
     }
 }
 
