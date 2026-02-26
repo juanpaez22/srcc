@@ -529,6 +529,77 @@ input[type="range"] {
     color: var(--cream);
 }
 
+/* Life Metrics Card */
+.life-card {
+    border-color: #4caf50;
+}
+
+.life-card h2 {
+    color: var(--tan);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+}
+
+.life-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+}
+
+.life-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 10px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.life-icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+
+.life-label {
+    font-size: 0.75rem;
+    color: var(--tan);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.life-value {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--cream);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 4px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--burnt-orange), #4caf50);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.life-loading, .life-error {
+    color: var(--tan);
+    font-size: 0.9rem;
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+}
+
 /* Chores Page Styles */
 .page-header {
     text-align: center;
@@ -701,7 +772,7 @@ input[type="range"] {
     font-size: 0.85rem;
 }
 
-@media (max-width: 600px) {
+/* Chores Page Styles */
     .site-header {
         flex-direction: column;
         text-align: center;

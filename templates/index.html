@@ -27,7 +27,7 @@
             </section>
 
             {% if missing_users or completed_users %}
-            <section class="card checkin-prompt">
+            <section class="card checkin-prompt" style="display: none;">
                 <h2>Daily Check-in</h2>
                 <p>Yesterday ({{ yesterday }}):</p>
                 {% if completed_users %}
@@ -59,6 +59,13 @@
                 <h2>Stocks</h2>
                 <div class="stocks-grid" id="stocks-grid">
                     <span class="stocks-loading">Loading...</span>
+                </div>
+            </section>
+
+            <section class="card life-card" id="life-card">
+                <h2>Personal Metrics</h2>
+                <div class="life-grid" id="life-grid">
+                    <div class="life-loading">Loading...</div>
                 </div>
             </section>
 
@@ -214,11 +221,67 @@
                 });
         }
 
+        function updateLifeMetrics() {
+            Promise.all([
+                fetch('/life/streaks').then(r => r.json()),
+                fetch('/life/mood').then(r => r.json()),
+                fetch('/life/fitness').then(r => r.json())
+            ])
+            .then(([streaks, mood, fitness]) => {
+                const grid = document.getElementById('life-grid');
+                
+                // Fitness streak
+                const streak = streaks.fitness || {};
+                const streakDays = streak.current_streak || 0;
+                const weeklyCount = streak.weekly_count || 0;
+                const weeklyTarget = streak.weekly_target || 4;
+                const weeklyPct = Math.min(100, (weeklyCount / weeklyTarget) * 100);
+                
+                // Mood
+                const moodData = mood.entries && mood.entries[0];
+                const moodValue = moodData ? moodData.mood : null;
+                const moodEmoji = moodValue >= 8 ? '😊' : moodValue >= 5 ? '😐' : moodValue ? '😔' : '—';
+                const moodLabel = moodValue ? `${moodValue}/10` : 'No data';
+                
+                // Last workout
+                const workouts = fitness.workouts || [];
+                const lastWorkout = workouts.length > 0 ? workouts[workouts.length - 1].date : null;
+                
+                grid.innerHTML = `
+                    <div class="life-item">
+                        <span class="life-icon">💪</span>
+                        <span class="life-label">Gym Streak</span>
+                        <span class="life-value">${streakDays} days</span>
+                    </div>
+                    <div class="life-item">
+                        <span class="life-icon">📅</span>
+                        <span class="life-label">This Week</span>
+                        <span class="life-value">${weeklyCount}/${weeklyTarget}</span>
+                        <div class="progress-bar"><div class="progress-fill" style="width: ${weeklyPct}%"></div></div>
+                    </div>
+                    <div class="life-item">
+                        <span class="life-icon">${moodEmoji}</span>
+                        <span class="life-label">Mood</span>
+                        <span class="life-value">${moodLabel}</span>
+                    </div>
+                    <div class="life-item">
+                        <span class="life-icon">🏋️</span>
+                        <span class="life-label">Last Workout</span>
+                        <span class="life-value">${lastWorkout || 'Never'}</span>
+                    </div>
+                `;
+            })
+            .catch(err => {
+                document.getElementById('life-grid').innerHTML = '<span class="life-error">Unable to load metrics</span>';
+            });
+        }
+
         updateStats();
         updateWeather();
         updateStocks();
         updateNews();
         updateChores();
+        updateLifeMetrics();
         setInterval(updateStats, 3000);
         setInterval(updateWeather, 300000);
         setInterval(updateStocks, 60000);
