@@ -569,53 +569,23 @@ def checkin_status():
 @app.route('/telemetry', methods=['GET', 'POST'])
 def telemetry():
     data = load_data()
-    users = data.get('users', ['Default'])
-    
-    if request.method == 'POST':
-        action = request.form.get('action') or request.json.get('action') if request.json else None
-        
-        if action == 'add_user':
-            new_user = request.form.get('new_user') or (request.json.get('new_user') if request.json else None)
-            if new_user and new_user not in users:
-                users.append(new_user)
-                data['users'] = users
-                if new_user not in data.get('telemetry', {}):
-                    data['telemetry'][new_user] = []
-                save_data(data)
-                return jsonify({'success': True, 'users': users})
-        
-        # Submit check-in
-        user = request.form.get('user') or (request.json.get('user') if request.json else None)
-        date = request.form.get('date') or (request.json.get('date') if request.json else None)
-        
-        if not user:
-            user = users[0]
-        if not date:
-            date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-        
-        metrics = {}
-        if request.form:
-            metrics = {k: v for k, v in request.form.items() if k not in ['action', 'user', 'date']}
-        elif request.json:
-            metrics = request.json.get('metrics', {})
-        
-        if user not in data.get('telemetry', {}):
-            data['telemetry'][user] = []
-        
-        # Remove existing entry for this date
-        data['telemetry'][user] = [e for e in data['telemetry'][user] if e.get('date') != date]
-        
-        entry = {'date': date, 'metrics': metrics}
-        data['telemetry'][user].append(entry)
-        save_data(data)
-        return jsonify({'success': True})
-    
-    # GET - show form
     telemetry_data = data.get('telemetry', {})
+    
+    # Build entries list for read-only display
+    entries = []
+    for user, user_entries in telemetry_data.items():
+        for entry in user_entries:
+            entries.append({
+                'user': user,
+                'date': entry.get('date', 'Unknown'),
+                'metrics': entry.get('metrics', {})
+            })
+    
+    # Sort by date descending
+    entries.sort(key=lambda x: x['date'], reverse=True)
+    
     return render_template('telemetry.html', 
-                          users=users, 
-                          telemetry=telemetry_data,
-                          yesterday=(datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d'))
+                          entries=entries[:50])  # Show last 50 entries
 
 @app.route('/chores_page', methods=['GET', 'POST'])
 def chores_page():

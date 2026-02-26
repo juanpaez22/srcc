@@ -21,26 +21,6 @@
         </header>
 
         <main class="main-content">
-            <section class="card form-section">
-                <h2>Add New Chore</h2>
-                <form method="POST">
-                    <input type="hidden" name="action" value="add">
-                    <input type="text" name="name" placeholder="Chore name" required>
-                    <select name="schedule" id="scheduleSelect" onchange="updateScheduleParam()">
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Every N Weeks</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
-                        <option value="onetime">One Time</option>
-                    </select>
-                    <div id="scheduleParamField" style="display: none;"></div>
-                    <button type="submit">Add Chore</button>
-                </form>
-                <p style="color: var(--tan); font-size: 0.8rem; margin-top: 10px;">
-                    Every N: Select weeks (1-52) + day of week | Monthly: day 1-28 | Yearly: mm-dd | One time: yyyy-mm-dd
-                </p>
-            </section>
-
             <section class="card">
                 <h2>Your Chores</h2>
                 {% if chores %}
@@ -71,10 +51,6 @@
                                 | Last done: {{ chore.last_done or 'Never' }}
                             </span>
                         </div>
-                        <div class="chore-actions">
-                            <a href="/complete_chore/{{ loop.index0 }}" class="btn-complete">Done Today</a>
-                            <a href="/delete_chore/{{ loop.index0 }}" class="btn-delete">Delete</a>
-                        </div>
                     </li>
                     {% endfor %}
                 </ul>
@@ -89,46 +65,5 @@
         </footer>
     </div>
 
-    <script>
-        function updateScheduleParam() {
-            const select = document.getElementById('scheduleSelect');
-            const field = document.getElementById('scheduleParamField');
-            
-            const schedule = select.value;
-            if (schedule === 'weekly') {
-                // Every N weeks: number input + day of week
-                field.style.display = 'block';
-                field.innerHTML = `
-                    <input type="number" name="schedule_weeks" value="1" min="1" max="52" style="width: 60px; padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);">
-                    <span>week(s) on </span>
-                    <select name="schedule_param" style="padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);">
-                        <option value="0">Monday</option>
-                        <option value="1">Tuesday</option>
-                        <option value="2">Wednesday</option>
-                        <option value="3">Thursday</option>
-                        <option value="4">Friday</option>
-                        <option value="5">Saturday</option>
-                        <option value="6" selected>Sunday</option>
-                    </select>
-                `;
-            } else if (schedule === 'monthly') {
-                field.style.display = 'block';
-                let options = '';
-                for (let i = 1; i <= 28; i++) {
-                    options += `<option value="${i}">${i}</option>`;
-                }
-                field.innerHTML = `<select name="schedule_param">${options}</select>`;
-            } else if (schedule === 'yearly') {
-                field.style.display = 'block';
-                field.innerHTML = '<div style="display: flex; gap: 5px;"><input type="number" name="schedule_month" placeholder="mm" min="1" max="12" style="width: 50px; padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);"><input type="number" name="schedule_day" placeholder="dd" min="1" max="31" style="width: 50px; padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);"></div>';
-            } else if (schedule === 'onetime') {
-                field.style.display = 'block';
-                field.innerHTML = '<input type="date" name="schedule_param" style="padding: 8px; border: 1px solid var(--burnt-orange); border-radius: 6px; background: var(--dark-brown); color: var(--cream);">';
-            } else {
-                field.style.display = 'none';
-                field.innerHTML = '';
-            }
-        }
-    </script>
 </body>
 </html>
