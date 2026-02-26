@@ -834,7 +834,32 @@ def log_activity():
     
     if logged:
         save_life_data(life)
-        return jsonify({'success': True, 'logged': logged, 'message': f"Got it! {', '.join(logged)}"})
+        
+        # Build friendly response
+        response_msg = "Got it! "
+        
+        if 'workout logged' in logged:
+            # Calculate streak for workout
+            streak_info = calculate_streak(life.get('fitness', {}).get('workouts', []))
+            streak = streak_info.get('current_streak', 0)
+            week_count = streak_info.get('weekly_count', 0)
+            target = streak_info.get('weekly_target', 4)
+            
+            if streak > 0:
+                response_msg += f"🏋️ Workout recorded! 🔥 {streak}-day streak! ({week_count}/{target} this week) "
+            else:
+                response_msg += f"🏋️ Workout recorded! ({week_count}/{target} this week) "
+        
+        if 'mood:' in str(logged):
+            response_msg += "😊 Mood noted! "
+        
+        if 'learning item logged' in logged:
+            response_msg += "📚 Learning logged! "
+        
+        if 'social interaction logged' in logged:
+            response_msg += "👥 Social time recorded! "
+        
+        return jsonify({'success': True, 'logged': logged, 'message': response_msg.strip()})
     
     return jsonify({'success': False, 'message': "Didn't recognize that activity. Try: 'went to gym', 'feeling great', 'read a book', 'hung out with friend'"})
 
