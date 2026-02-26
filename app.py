@@ -648,6 +648,57 @@ def delete_chore(index):
         save_data(data)
     return redirect(url_for('chores_page'))
 
+# Nanobot release checker (auto-check for updates)
+NANOBOT_RELEASES_FILE = os.path.join(os.path.dirname(__file__), 'data', 'nanobot_releases.json')
+NANOBOT_REPO = "HKUDS/nanobot"
+
+def check_nanobot_release():
+    """Check GitHub for latest nanobot release. Returns release info and whether it's new."""
+    try:
+        url = f"https://api.github.com/repos/{NANOBOT_REPO}/releases/latest"
+        resp = requests.get(url, timeout=10)
+        if resp.status_code != 200:
+            return {'error': f'API returned {resp.status_code}'}
+        
+        release = resp.json()
+        latest_tag = release.get('tag_name', 'v0.0.0')
+        latest_version = latest_tag.lstrip('v')
+        
+        # Load last checked version
+        last_checked = {'version': '0.0.0', 'tag': ''}
+        if os.path.exists(NANOBOT_RELEASES_FILE):
+            try:
+                with open(NANOBOT_RELEASES_FILE, 'r') as f:
+                    last_checked = json.load(f)
+            except:
+                pass
+        
+        # Compare versions (simple string comparison works for semantic versioning)
+        is_new = latest_version != last_checked.get('version', '0.0.0')
+        
+        # Update stored version
+        os.makedirs(os.path.dirname(NANOBOT_RELEASES_FILE), exist_ok=True)
+        with open(NANOBOT_RELEASES_FILE, 'w') as f:
+            json.dump({'version': latest_version, 'tag': latest_tag, 'checked_at': datetime.now().isoformat()}, f)
+        
+        return {
+            'latest_version': latest_version,
+            'latest_tag': latest_tag,
+            'release_url': release.get('html_url', ''),
+            'body': release.get('body', '')[:500],  # First 500 chars
+            'published_at': release.get('published_at', ''),
+            'is_new': is_new,
+            'last_checked_version': last_checked.get('version', '0.0.0'),
+            'error': None
+        }
+    except Exception as e:
+        return {'error': str(e)}
+
+@app.route('/nanobot/releases')
+def nanobot_releases():
+    """Get latest nanobot release info - useful for checking updates"""
+    return jsonify(check_nanobot_release())
+
 # Life tracking endpoints (fitness, mood, learning, social)
 @app.route('/life')
 def life():
