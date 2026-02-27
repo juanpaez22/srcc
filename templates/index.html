@@ -225,9 +225,11 @@
             Promise.all([
                 fetch('/life/streaks').then(r => r.json()),
                 fetch('/life/mood').then(r => r.json()),
-                fetch('/life/fitness').then(r => r.json())
+                fetch('/life/fitness').then(r => r.json()),
+                fetch('/life/learning').then(r => r.json()),
+                fetch('/life/social').then(r => r.json())
             ])
-            .then(([streaks, mood, fitness]) => {
+            .then(([streaks, mood, fitness, learning, social]) => {
                 const grid = document.getElementById('life-grid');
                 
                 // Fitness streak
@@ -246,6 +248,14 @@
                 // Last workout
                 const workouts = fitness.workouts || [];
                 const lastWorkout = workouts.length > 0 ? workouts[workouts.length - 1].date : null;
+                
+                // Learning
+                const learningData = learning.entries || [];
+                const lastLearning = learningData.length > 0 ? learningData[learningData.length - 1].activity : 'No data';
+                
+                // Social
+                const socialData = social.entries || [];
+                const lastSocial = socialData.length > 0 ? socialData[socialData.length - 1].activity : 'No data';
                 
                 grid.innerHTML = `
                     <div class="life-item">
@@ -268,6 +278,16 @@
                         <span class="life-icon">🏋️</span>
                         <span class="life-label">Last Workout</span>
                         <span class="life-value">${lastWorkout || 'Never'}</span>
+                    </div>
+                    <div class="life-item">
+                        <span class="life-icon">📚</span>
+                        <span class="life-label">Learning</span>
+                        <span class="life-value">${lastLearning}</span>
+                    </div>
+                    <div class="life-item">
+                        <span class="life-icon">👥</span>
+                        <span class="life-label">Social</span>
+                        <span class="life-value">${lastSocial}</span>
                     </div>
                 `;
             })
