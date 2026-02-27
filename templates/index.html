@@ -110,6 +110,10 @@
                     <span class="stat-label">Last Bevo Tend</span>
                     <span class="stat-value" id="last_tend">--</span>
                 </div>
+                <div class="stat-box">
+                    <span class="stat-label">Bevo</span>
+                    <span class="stat-value" id="bevo-version">--</span>
+                </div>
             </div>
         </footer>
     </div>
@@ -136,6 +140,20 @@
                     document.getElementById('uptime').textContent = data.uptime || '--';
                     document.getElementById('time').textContent = data.time;
                     document.getElementById('last_tend').textContent = data.last_tend_time || 'Never';
+                });
+            
+            // Fetch nanobot version
+            fetch('/nanobot/releases')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('bevo-version').textContent = 'Error';
+                        return;
+                    }
+                    document.getElementById('bevo-version').textContent = 'v' + data.latest_version;
+                })
+                .catch(() => {
+                    document.getElementById('bevo-version').textContent = '--';
                 });
         }
 
