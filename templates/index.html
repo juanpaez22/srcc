@@ -204,7 +204,16 @@
                     data.themes.forEach(theme => {
                         html += `<div class="digest-theme"><h4>${theme.theme}</h4><ul>`;
                         theme.headlines.forEach(h => {
-                            html += `<li><a href="${h.link}" target="_blank" class="news-item">${h.title}</a> <span class="news-source">(${h.source})</span></li>`;
+                            // Estimate read time: ~200 words per minute
+                            const wordCount = h.title.split(' ').length;
+                            const readTime = Math.max(1, Math.ceil(wordCount / 200));
+                            html += `<li>
+                                <a href="${h.link}" target="_blank" class="news-item">${h.title}</a>
+                                <span class="news-meta">
+                                    <span class="news-source">${h.source}</span>
+                                    <span class="news-readtime">${readTime} min</span>
+                                </span>
+                            </li>`;
                         });
                         html += '</ul></div>';
                     });
