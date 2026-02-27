@@ -146,7 +146,12 @@
                         document.getElementById('bevo-version').textContent = 'Error';
                         return;
                     }
-                    document.getElementById('bevo-version').textContent = 'v' + data.latest_version;
+                    const version = 'v' + data.latest_version;
+                    if (data.is_new) {
+                        document.getElementById('bevo-version').innerHTML = `${version} <span style="color:#4caf50">⬆ update</span>`;
+                    } else {
+                        document.getElementById('bevo-version').textContent = version + ' ✓';
+                    }
                 })
                 .catch(() => {
                     document.getElementById('bevo-version').textContent = '--';
