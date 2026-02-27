@@ -78,6 +78,13 @@
                     <div class="news-ticker" id="news-digest"></div>
                 </div>
             </section>
+
+            <section class="card future-improvements-card" id="future-improvements-card">
+                <h3>🚧 Future Improvements</h3>
+                <div class="future-tasks" id="future-tasks">
+                    <span class="loading">Loading...</span>
+                </div>
+            </section>
         </main>
 
         <footer class="telemetry">
@@ -350,6 +357,25 @@
             });
         }
 
+        function updateFutureTasks() {
+            fetch('/rancher/tasks')
+            .then(r => r.json())
+            .then(data => {
+                const container = document.getElementById('future-tasks');
+                if (data.active_tasks && data.active_tasks.length > 0) {
+                    const tasksHtml = data.active_tasks.map(task => 
+                        `<div class="future-task-item">${task}</div>`
+                    ).join('');
+                    container.innerHTML = `<div class="tasks-list">${tasksHtml}</div>`;
+                } else {
+                    container.innerHTML = '<span class="empty">All caught up! 🎉</span>';
+                }
+            })
+            .catch(() => {
+                document.getElementById('future-tasks').innerHTML = '<span class="error">Unable to load tasks</span>';
+            });
+        }
+
         updateStats();
         updateWeather();
         updateStocks();
@@ -357,6 +383,7 @@
         updateChores();
         updateLifeMetrics();
         updateJournal();
+        updateFutureTasks();
         setInterval(updateStats, 3000);
         setInterval(updateWeather, 300000);
         setInterval(updateStocks, 60000);

@@ -940,5 +940,31 @@ def life_streaks():
         'goals': fitness.get('goals', {})
     })
 
+# Ranch Tasks - read from workspace memory
+import re
+
+@app.route('/rancher/tasks')
+def rancher_tasks():
+    """Get pending tasks from RANCH_TASKS.md"""
+    tasks_file = '/home/juanpaez/.nanobot/workspace/memory/RANCH_TASKS.md'
+    try:
+        with open(tasks_file, 'r') as f:
+            content = f.read()
+        
+        # Parse active tasks (unchecked boxes)
+        active_tasks = []
+        for line in content.split('\n'):
+            if line.startswith('- [ ]'):
+                task_text = line[5:].strip()
+                # Extract section headers for context
+                active_tasks.append(task_text)
+        
+        return jsonify({
+            'active_tasks': active_tasks,
+            'count': len(active_tasks)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e), 'active_tasks': [], 'count': 0})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=False)
