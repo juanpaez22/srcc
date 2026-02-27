@@ -55,6 +55,13 @@
                 </div>
             </section>
 
+            <section class="card journal-card" id="journal-card">
+                <h2>📝 Recent Journal</h2>
+                <div id="journal-entry">
+                    <span class="journal-loading">Loading...</span>
+                </div>
+            </section>
+
             <section class="chores-section card" id="overdue-section" style="display: none;">
                 <h2 style="color: #f44336;">⚠️ Overdue Chores</h2>
                 <ul class="chores-list" id="overdue-list"></ul>
@@ -308,12 +315,34 @@
             });
         }
 
+        function updateJournal() {
+            fetch('/journal')
+            .then(r => r.json())
+            .then(data => {
+                const entry = data.entries && data.entries[0];
+                const container = document.getElementById('journal-entry');
+                if (entry) {
+                    container.innerHTML = `
+                        <p class="journal-prompt">${entry.prompt}</p>
+                        <p class="journal-text">${entry.text || 'No entry'}</p>
+                        <span class="journal-date">${entry.date}</span>
+                    `;
+                } else {
+                    container.innerHTML = '<span class="journal-empty">No journal entries yet</span>';
+                }
+            })
+            .catch(() => {
+                document.getElementById('journal-entry').innerHTML = '<span class="journal-error">Unable to load journal</span>';
+            });
+        }
+
         updateStats();
         updateWeather();
         updateStocks();
         updateNews();
         updateChores();
         updateLifeMetrics();
+        updateJournal();
         setInterval(updateStats, 3000);
         setInterval(updateWeather, 300000);
         setInterval(updateStocks, 60000);

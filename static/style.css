@@ -600,6 +600,44 @@ input[type="range"] {
     padding: 20px;
 }
 
+/* Journal Card */
+.journal-card {
+    border-color: #9c27b0;
+}
+
+.journal-card h2 {
+    color: var(--tan);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+}
+
+#journal-entry {
+    color: var(--cream);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.journal-prompt {
+    font-style: italic;
+    color: var(--tan);
+    margin-bottom: 10px;
+}
+
+.journal-text {
+    margin-bottom: 10px;
+}
+
+.journal-date {
+    font-size: 0.8rem;
+    color: var(--tan);
+}
+
+.journal-empty, .journal-error {
+    color: var(--tan);
+    font-style: italic;
+}
+
 /* Chores Page Styles */
 .page-header {
     text-align: center;
