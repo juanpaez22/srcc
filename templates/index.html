@@ -99,6 +99,10 @@
                     <span class="stat-value" id="memory">--%</span>
                 </div>
                 <div class="stat-box">
+                    <span class="stat-label">Uptime</span>
+                    <span class="stat-value" id="uptime">--</span>
+                </div>
+                <div class="stat-box">
                     <span class="stat-label">Updated</span>
                     <span class="stat-value" id="time">--:--:--</span>
                 </div>
@@ -129,6 +133,7 @@
                 .then(data => {
                     document.getElementById('cpu').textContent = data.cpu + '%';
                     document.getElementById('memory').textContent = data.memory + '%';
+                    document.getElementById('uptime').textContent = data.uptime || '--';
                     document.getElementById('time').textContent = data.time;
                     document.getElementById('last_tend').textContent = data.last_tend_time || 'Never';
                 });

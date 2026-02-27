@@ -516,10 +516,17 @@ def index():
 @app.route('/stats')
 def stats():
     data = load_data()
+    # Calculate uptime
+    boot_time = psutil.boot_time()
+    uptime_seconds = time.time() - boot_time
+    uptime_hours = int(uptime_seconds // 3600)
+    uptime_mins = int((uptime_seconds % 3600) // 60)
+    uptime_str = f"{uptime_hours}h {uptime_mins}m"
     return {
         'cpu': psutil.cpu_percent(),
         'memory': psutil.virtual_memory().percent,
         'time': time.strftime('%H:%M:%S'),
+        'uptime': uptime_str,
         'last_tend_time': data.get('last_tend_time', '')
     }
 
