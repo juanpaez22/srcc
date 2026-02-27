@@ -26,20 +26,6 @@
                 <p class="date" id="current-date"></p>
             </section>
 
-            {% if missing_users or completed_users %}
-            <section class="card checkin-prompt" style="display: none;">
-                <h2>Daily Check-in</h2>
-                <p>Yesterday ({{ yesterday }}):</p>
-                {% if completed_users %}
-                <p style="color: #4caf50;">✓ Completed: {{ completed_users|join(', ') }}</p>
-                {% endif %}
-                {% if missing_users %}
-                <p style="color: #f44336;">✗ Missing: {{ missing_users|join(', ') }}</p>
-                <a href="/telemetry?date={{ yesterday }}" class="btn">Fill Out Now</a>
-                {% endif %}
-            </section>
-            {% endif %}
-
             <section class="card weather-card">
                 <h2>{{ weather_city }} Weather</h2>
                 <div class="weather-current">
