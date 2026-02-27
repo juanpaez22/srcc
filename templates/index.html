@@ -73,10 +73,8 @@
             </section>
 
             <section class="news-section">
-                <div class="news-category">
-                    <h3>📰 Daily Digest</h3>
-                    <div class="news-ticker" id="news-digest"></div>
-                </div>
+                <h3>📰 Daily Digest</h3>
+                <div class="digest-grid" id="news-digest"></div>
             </section>
 
             <section class="card future-improvements-card" id="future-improvements-card">
@@ -212,23 +210,34 @@
                         return;
                     }
                     
-                    let html = '';
+                    let html = '<div class="digest-cards">';
                     data.themes.forEach(theme => {
-                        html += `<div class="digest-theme"><h4>${theme.theme}</h4><ul>`;
-                        theme.headlines.forEach(h => {
-                            // Estimate read time: ~200 words per minute
+                        // Skip empty themes
+                        if (!theme.headlines || theme.headlines.length === 0) return;
+                        
+                        // Get emoji based on theme
+                        let emoji = '📰';
+                        const t = theme.theme.toLowerCase();
+                        if (t.includes('ai') || t.includes('tech')) emoji = '🤖';
+                        else if (t.includes('sport')) emoji = '⚽';
+                        else if (t.includes('business') || t.includes('econom')) emoji = '📈';
+                        else if (t.includes('world')) emoji = '🌍';
+                        else if (t.includes('politics') || t.includes('government')) emoji = '🏛️';
+                        
+                        html += `<div class="digest-card">
+                            <h4 class="digest-card-title">${emoji} ${theme.theme}</h4>
+                            <ul class="digest-headlines">`;
+                        theme.headlines.slice(0, 5).forEach(h => {
                             const wordCount = h.title.split(' ').length;
                             const readTime = Math.max(1, Math.ceil(wordCount / 200));
-                            html += `<li>
-                                <a href="${h.link}" target="_blank" class="news-item">${h.title}</a>
-                                <span class="news-meta">
-                                    <span class="news-source">${h.source}</span>
-                                    <span class="news-readtime">${readTime} min</span>
-                                </span>
+                            html += `<li class="digest-headline">
+                                <a href="${h.link}" target="_blank">${h.title}</a>
+                                <span class="digest-meta">${h.source} · ${readTime}m</span>
                             </li>`;
                         });
                         html += '</ul></div>';
                     });
+                    html += '</div>';
                     document.getElementById('news-digest').innerHTML = html;
                 });
         }

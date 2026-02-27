@@ -498,6 +498,69 @@ input[type="range"] {
     color: var(--cream);
 }
 
+/* Digest Cards */
+.news-section h3 {
+    color: var(--tan);
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+}
+
+.digest-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.digest-card {
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(204, 85, 0, 0.3);
+    padding: 15px;
+}
+
+.digest-card-title {
+    color: var(--tan);
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(204, 85, 0, 0.2);
+}
+
+.digest-headlines {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.digest-headline {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.digest-headline:last-child {
+    border-bottom: none;
+}
+
+.digest-headline a {
+    color: var(--cream);
+    text-decoration: none;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.digest-headline a:hover {
+    color: var(--burnt-orange);
+}
+
+.digest-meta {
+    color: #888;
+    font-size: 0.75rem;
+}
+
 .telemetry {
     margin-top: auto;
     padding: 20px;
