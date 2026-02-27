@@ -126,6 +126,9 @@
                     document.getElementById('uptime').textContent = data.uptime || '--';
                     document.getElementById('time').textContent = data.time;
                     document.getElementById('last_tend').textContent = data.last_tend_time || 'Never';
+                })
+                .catch(() => {
+                    document.getElementById('last_tend').textContent = 'Error';
                 });
             
             // Fetch nanobot version
