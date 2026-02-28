@@ -6,14 +6,9 @@ import json
 import os
 from datetime import datetime, timedelta, timezone
 import pytz
-from config import WEATHER_LAT, WEATHER_LON, WEATHER_CITY, NEWS_FEEDS, STOCKS, DEFAULT_CHORES, FEATURES
-from sources import get_cached_articles, fetch_all_articles, get_sources_by_category, clear_cache
-from modules import register_life_routes
+from config import WEATHER_LAT, WEATHER_LON, WEATHER_CITY, NEWS_FEEDS, STOCKS
 
 app = Flask(__name__)
-
-# Register plugin-style modules
-register_life_routes(app)
 
 DATA_FILE = os.path.join(os.path.dirname(__file__), 'data.json')
 PACIFIC_TZ = pytz.timezone('America/Los_Angeles')
@@ -27,8 +22,6 @@ def load_data():
 def save_data(data):
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f)
-
-# Life data (fitness, mood, learning, social) - git-ignored
 
 def get_weather():
     try:
@@ -89,7 +82,6 @@ def get_weather():
         return {'temp': '--', 'condition': '--', 'wind': '--', 'city': WEATHER_CITY, 'forecast': [], 'error': str(e)}
 
 def get_news():
-    """Fetch news from RSS feeds, handling both RSS and Atom formats."""
     articles = []
     seen_titles = set()
     
@@ -114,35 +106,22 @@ def get_news():
                     source = "Wired"
                 
                 import re
-                
-                # Try RSS <item> first, then Atom <entry>
                 items = re.findall(r'<item>(.*?)</item>', content, re.DOTALL)
-                if not items:
-                    items = re.findall(r'<entry>(.*?)</entry>', content, re.DOTALL)
                 
                 for item in items[:8]:
-                    # Handle both RSS and Atom title formats
                     title_match = re.search(r'<title><!\[CDATA\[(.*?)\]\]></title>|<title>(.*?)</title>', item)
-                    # Handle both RSS <link> and Atom <link href="...">
-                    link_match = re.search(r'<link>(.*?)</link>|<link href="([^"]+)"', item)
-                    pub_match = re.search(r'<pubDate>(.*?)</pubDate>|<published>(.*?)</published>', item)
+                    link_match = re.search(r'<link>(.*?)</link>', item)
+                    pub_match = re.search(r'<pubDate>(.*?)</pubDate>', item)
                     
-                    title = (title_match.group(1) or title_match.group(2) or "No title").strip() if title_match else "No title"
-                    link = (link_match.group(1) or link_match.group(2) or "#").strip() if link_match else "#"
-                    pub_date = (pub_match.group(1) or pub_match.group(2) or "").strip() if pub_match else ""
+                    title = (title_match.group(1) or title_match.group(2) or "No title").strip()
+                    link = link_match.group(1).strip() if link_match else "#"
+                    pub_date = pub_match.group(1).strip() if pub_match else ""
                     
                     if title not in seen_titles and len(articles) < 20:
                         try:
-                            # Try multiple date formats (strip timezone for simpler parsing)
-                            pub_dt = None
-                            pub_clean = re.sub(r'[A-Z]{2,4}$', '', pub_date[:25]).strip()
-                            for fmt in ['%a, %d %b %Y %H:%M:%S', '%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%dT%H:%M:%S']:
-                                try:
-                                    pub_dt = datetime.strptime(pub_clean, fmt)
-                                    break
-                                except:
-                                    continue
-                            if pub_dt and (datetime.now() - pub_dt.replace(tzinfo=None)).days <= 1:
+                            pub_dt = datetime.strptime(pub_date[:25], '%a, %d %b %Y %H:%M:%S')
+                            pub_dt = pub_dt.replace(tzinfo=None)
+                            if (datetime.now() - pub_dt).days <= 1:
                                 articles.append({
                                     'title': title[:75] + ('...' if len(title) > 75 else ''),
                                     'link': link,
@@ -156,62 +135,6 @@ def get_news():
                 continue
     
     return articles
-
-def get_ai_digest(cached=False):
-    """Generate an AI-style digest by clustering news into themes.
-    Uses extractive ranking - no external API needed. Pi-friendly.
-    If cached=True, reads from cache file."""
-    import re
-    
-    cache_file = os.path.join(os.path.dirname(__file__), 'digest_cache.json')
-    
-    if cached and os.path.exists(cache_file):
-        try:
-            with open(cache_file, 'r') as f:
-                return json.load(f)
-        except:
-            pass
-    
-    articles = get_news()
-    if not articles:
-        return {'themes': [], 'error': 'No news available'}
-    
-    # Keywords for clustering
-    theme_keywords = {
-        'Politics & Government': ['trump', 'biden', 'congress', 'senate', 'white house', 'election', 'policy', 'government', 'parliament', 'minister'],
-        'Tech & AI': ['ai', 'artificial intelligence', 'tech', 'google', 'microsoft', 'apple', 'meta', 'facebook', 'amazon', 'startup', 'chip', 'semiconductor'],
-        'World': ['china', 'russia', 'ukraine', 'europe', 'middle east', 'war', 'military', 'nato', 'korea', 'india'],
-        'Business & Economy': ['economy', 'market', 'stock', 'inflation', 'fed', 'interest', 'trade', 'oil', 'energy', 'gas', 'price'],
-        'Science & Health': ['space', 'nasa', 'health', 'covid', 'vaccine', 'disease', 'cancer', 'climate', 'weather', 'storm'],
-    }
-    
-    # Assign articles to themes
-    themed = {theme: [] for theme in theme_keywords}
-    themed['Other'] = []
-    
-    for article in articles:
-        title_lower = article['title'].lower()
-        assigned = False
-        for theme, keywords in theme_keywords.items():
-            if any(kw in title_lower for kw in keywords):
-                themed[theme].append(article)
-                assigned = True
-                break
-        if not assigned:
-            themed['Other'].append(article)
-    
-    # Build digest with top headlines per theme
-    digest_themes = []
-    for theme, items in themed.items():
-        if items:
-            # Pick top 3 articles per theme
-            top_items = items[:3]
-            digest_themes.append({
-                'theme': theme,
-                'headlines': [{'title': a['title'], 'link': a['link'], 'source': a['source']} for a in top_items]
-            })
-    
-    return {'themes': digest_themes, 'error': None}
 
 def get_stocks():
     results = []
@@ -246,16 +169,13 @@ def get_stocks():
 
 def get_today_chores():
     data = load_data()
-    # Use default chores if none defined in data.json
-    chores_data = data.get('chores', []) or DEFAULT_CHORES
-    
     today = datetime.now()
     today_str = today.strftime('%Y-%m-%d')
     today_dow = today.weekday()  # 0=Monday, 6=Sunday
     today_dom = today.day
     
     chores = []
-    for chore in chores_data:
+    for chore in data.get('chores', []):
         schedule = chore.get('schedule', 'daily')
         schedule_param = chore.get('schedule_param', '')
         last_done = chore.get('last_done', '')
@@ -320,16 +240,13 @@ def get_today_chores():
 def get_overdue_chores():
     """Get chores that were due but not completed"""
     data = load_data()
-    # Use default chores if none defined in data.json
-    chores_data = data.get('chores', []) or DEFAULT_CHORES
-    
     today = datetime.now()
     today_str = today.strftime('%Y-%m-%d')
     today_dow = today.weekday()
     today_dom = today.day
     
     overdue = []
-    for chore in chores_data:
+    for chore in data.get('chores', []):
         # Skip if already done today
         if chore.get('last_done', '') == today_str:
             continue
@@ -399,33 +316,11 @@ def index():
 
 @app.route('/stats')
 def stats():
-    data = load_data()
-    # Calculate uptime
-    boot_time = psutil.boot_time()
-    uptime_seconds = time.time() - boot_time
-    uptime_hours = int(uptime_seconds // 3600)
-    uptime_mins = int((uptime_seconds % 3600) // 60)
-    uptime_str = f"{uptime_hours}h {uptime_mins}m"
     return {
         'cpu': psutil.cpu_percent(),
         'memory': psutil.virtual_memory().percent,
-        'time': time.strftime('%H:%M:%S'),
-        'uptime': uptime_str,
-        'last_tend_time': data.get('last_tend_time', '')
+        'time': time.strftime('%H:%M:%S')
     }
-
-@app.route('/config')
-def config():
-    """Return feature flags for dashboard"""
-    return {'features': FEATURES, 'version': '1.0'}
-
-@app.route('/tend', methods=['POST'])
-def tend():
-    """Update the last Bevo tend time (heartbeat)"""
-    data = load_data()
-    data['last_tend_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    save_data(data)
-    return jsonify({'success': True, 'last_tend_time': data['last_tend_time']})
 
 @app.route('/weather')
 def weather():
@@ -434,54 +329,6 @@ def weather():
 @app.route('/news')
 def news():
     return {'articles': get_news()}
-
-@app.route('/digest')
-def digest():
-    """AI-style digest - grouped by themes (uses cached version)"""
-    return get_ai_digest(cached=True)
-
-@app.route('/digest-cache', methods=['POST'])
-def digest_cache():
-    """Generate and cache the digest (for cron job at 5am)"""
-    result = get_ai_digest(cached=False)
-    cache_file = os.path.join(os.path.dirname(__file__), 'digest_cache.json')
-    with open(cache_file, 'w') as f:
-        json.dump(result, f)
-    return jsonify({'success': True, 'cached_at': datetime.now().isoformat()})
-
-@app.route('/feed')
-def feed():
-    """Curated feed - uses modular source system with caching.
-    Returns articles from all configured sources, grouped by category."""
-    articles = get_cached_articles(max_per_source=5, max_total=30)
-    
-    # Group by category
-    by_category = {}
-    for article in articles:
-        cat = article.get('category', 'other')
-        if cat not in by_category:
-            by_category[cat] = []
-        by_category[cat].append(article)
-    
-    return jsonify({
-        'version': '2.0',
-        'articles': articles,
-        'by_category': by_category,
-        'categories': list(by_category.keys()),
-        'source_count': len(set(a['source'] for a in articles)),
-        'error': None
-    })
-
-@app.route('/feed/refresh', methods=['POST'])
-def feed_refresh():
-    """Force refresh the feed cache"""
-    clear_cache()
-    articles = get_cached_articles(max_per_source=5, max_total=30)
-    return jsonify({
-        'success': True,
-        'articles_count': len(articles),
-        'cached_at': datetime.now().isoformat()
-    })
 
 @app.route('/stocks')
 def stocks():
@@ -499,23 +346,53 @@ def checkin_status():
 @app.route('/telemetry', methods=['GET', 'POST'])
 def telemetry():
     data = load_data()
+    users = data.get('users', ['Default'])
+    
+    if request.method == 'POST':
+        action = request.form.get('action') or request.json.get('action') if request.json else None
+        
+        if action == 'add_user':
+            new_user = request.form.get('new_user') or (request.json.get('new_user') if request.json else None)
+            if new_user and new_user not in users:
+                users.append(new_user)
+                data['users'] = users
+                if new_user not in data.get('telemetry', {}):
+                    data['telemetry'][new_user] = []
+                save_data(data)
+                return jsonify({'success': True, 'users': users})
+        
+        # Submit check-in
+        user = request.form.get('user') or (request.json.get('user') if request.json else None)
+        date = request.form.get('date') or (request.json.get('date') if request.json else None)
+        
+        if not user:
+            user = users[0]
+        if not date:
+            date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        
+        metrics = {}
+        if request.form:
+            metrics = {k: v for k, v in request.form.items() if k not in ['action', 'user', 'date']}
+        elif request.json:
+            metrics = request.json.get('metrics', {})
+        
+        if user not in data.get('telemetry', {}):
+            data['telemetry'][user] = []
+        
+        # Remove existing entry for this date
+        data['telemetry'][user] = [e for e in data['telemetry'][user] if e.get('date') != date]
+        
+        entry = {'date': date, 'metrics': metrics}
+        data['telemetry'][user].append(entry)
+        save_data(data)
+        return jsonify({'success': True})
+    
+    # GET - show form
     telemetry_data = data.get('telemetry', {})
-    
-    # Build entries list for read-only display
-    entries = []
-    for user, user_entries in telemetry_data.items():
-        for entry in user_entries:
-            entries.append({
-                'user': user,
-                'date': entry.get('date', 'Unknown'),
-                'metrics': entry.get('metrics', {})
-            })
-    
-    # Sort by date descending
-    entries.sort(key=lambda x: x['date'], reverse=True)
-    
     return render_template('telemetry.html', 
-                          entries=entries[:50])  # Show last 50 entries
+                          users=users, 
+                          telemetry=telemetry_data,
+                          yesterday=(datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d'))
 
 @app.route('/chores_page', methods=['GET', 'POST'])
 def chores_page():
@@ -578,83 +455,53 @@ def delete_chore(index):
         save_data(data)
     return redirect(url_for('chores_page'))
 
-# Nanobot release checker (auto-check for updates)
-NANOBOT_RELEASES_FILE = os.path.join(os.path.dirname(__file__), 'data', 'nanobot_releases.json')
-NANOBOT_REPO = "HKUDS/nanobot"
 
-def check_nanobot_release():
-    """Check GitHub for latest nanobot release. Returns release info and whether it's new."""
-    try:
-        url = f"https://api.github.com/repos/{NANOBOT_REPO}/releases/latest"
-        resp = requests.get(url, timeout=10)
-        if resp.status_code != 200:
-            return {'error': f'API returned {resp.status_code}'}
-        
-        release = resp.json()
-        latest_tag = release.get('tag_name', 'v0.0.0')
-        latest_version = latest_tag.lstrip('v')
-        
-        # Load last checked version
-        last_checked = {'version': '0.0.0', 'tag': ''}
-        if os.path.exists(NANOBOT_RELEASES_FILE):
-            try:
-                with open(NANOBOT_RELEASES_FILE, 'r') as f:
-                    last_checked = json.load(f)
-            except:
-                pass
-        
-        # Compare versions (simple string comparison works for semantic versioning)
-        is_new = latest_version != last_checked.get('version', '0.0.0')
-        
-        # Update stored version
-        os.makedirs(os.path.dirname(NANOBOT_RELEASES_FILE), exist_ok=True)
-        with open(NANOBOT_RELEASES_FILE, 'w') as f:
-            json.dump({'version': latest_version, 'tag': latest_tag, 'checked_at': datetime.now().isoformat()}, f)
-        
-        return {
-            'latest_version': latest_version,
-            'latest_tag': latest_tag,
-            'release_url': release.get('html_url', ''),
-            'body': release.get('body', '')[:500],  # First 500 chars
-            'published_at': release.get('published_at', ''),
-            'is_new': is_new,
-            'last_checked_version': last_checked.get('version', '0.0.0'),
-            'error': None
-        }
-    except Exception as e:
-        return {'error': str(e)}
+# Digest cache for AI-generated morning news digest
+DIGEST_FILE = os.path.join(os.path.dirname(__file__), "digest.json")
 
-@app.route('/nanobot/releases')
-def nanobot_releases():
-    """Get latest nanobot release info - useful for checking updates"""
-    return jsonify(check_nanobot_release())
+def load_digest():
+    if os.path.exists(DIGEST_FILE):
+        with open(DIGEST_FILE, 'r') as f:
+            return json.load(f)
+    return {}
 
-# Life tracking endpoints (fitness, mood, learning, social)
-# Ranch Tasks - read from workspace memory
-import re
+def save_digest(data):
+    with open(DIGEST_FILE, 'w') as f:
+        json.dump(data, f)
 
-@app.route('/rancher/tasks')
-def rancher_tasks():
-    """Get pending tasks from RANCH_TASKS.md"""
-    tasks_file = '/home/juanpaez/.nanobot/workspace/memory/RANCH_TASKS.md'
-    try:
-        with open(tasks_file, 'r') as f:
-            content = f.read()
-        
-        # Parse active tasks (unchecked boxes)
-        active_tasks = []
-        for line in content.split('\n'):
-            if line.startswith('- [ ]'):
-                task_text = line[5:].strip()
-                # Extract section headers for context
-                active_tasks.append(task_text)
-        
-        return jsonify({
-            'active_tasks': active_tasks,
-            'count': len(active_tasks)
-        })
-    except Exception as e:
-        return jsonify({'error': str(e), 'active_tasks': [], 'count': 0})
+@app.route('/digest-cache', methods=['GET', 'POST'])
+def digest_cache():
+    if request.method == 'GET':
+        return jsonify(load_digest())
+    elif request.method == 'POST':
+        data = request.get_json()
+        if data:
+            save_digest(data)
+            return jsonify({"status": "ok", "message": "Digest cached"})
+        return jsonify({"status": "error", "message": "No data provided"}), 400
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80, debug=False)
+# Digest cache for AI-generated morning news digest
+DIGEST_FILE = os.path.join(os.path.dirname(__file__), "digest.json")
+
+def load_digest():
+    if os.path.exists(DIGEST_FILE):
+        with open(DIGEST_FILE, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_digest(data):
+    with open(DIGEST_FILE, 'w') as f:
+        json.dump(data, f)
+
+@app.route('/digest-cache', methods=['GET', 'POST'])
+def digest_cache():
+    if request.method == 'GET':
+        return jsonify(load_digest())
+    elif request.method == 'POST':
+        data = request.get_json()
+        if data:
+            save_digest(data)
+            return jsonify({"status": "ok", "message": "Digest cached"})
+        return jsonify({"status": "error", "message": "No data provided"}), 400
+
+
