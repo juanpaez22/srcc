@@ -336,12 +336,19 @@
                 const lastWorkout = workouts.length > 0 ? workouts[workouts.length - 1].date : null;
                 
                 // Learning
-                const learningData = learning.entries || [];
-                const lastLearning = learningData.length > 0 ? learningData[learningData.length - 1].activity : 'No data';
+                const learningBooks = learning.books || [];
+                const learningCourses = learning.courses || [];
+                const lastLearning = learningBooks.length > 0 
+                    ? '📖 ' + learningBooks[learningBooks.length-1].title 
+                    : learningCourses.length > 0 
+                        ? '📚 ' + learningCourses[learningCourses.length-1].title 
+                        : 'No data';
                 
                 // Social
-                const socialData = social.entries || [];
-                const lastSocial = socialData.length > 0 ? socialData[socialData.length - 1].activity : 'No data';
+                const socialInteractions = social.interactions || [];
+                const lastSocial = socialInteractions.length > 0 
+                    ? socialInteractions[socialInteractions.length-1].with || 'No data' 
+                    : 'No data';
                 
                 grid.innerHTML = `
                     <div class="life-item">
