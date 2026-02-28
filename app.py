@@ -7,6 +7,7 @@ import os
 from datetime import datetime, timedelta, timezone
 import pytz
 from config import WEATHER_LAT, WEATHER_LON, WEATHER_CITY, NEWS_FEEDS, STOCKS, DEFAULT_CHORES
+from sources import get_cached_articles, fetch_all_articles, get_sources_by_category, clear_cache
 
 app = Flask(__name__)
 
@@ -559,6 +560,40 @@ def digest_cache():
     with open(cache_file, 'w') as f:
         json.dump(result, f)
     return jsonify({'success': True, 'cached_at': datetime.now().isoformat()})
+
+@app.route('/feed')
+def feed():
+    """Curated feed - uses modular source system with caching.
+    Returns articles from all configured sources, grouped by category."""
+    articles = get_cached_articles(max_per_source=5, max_total=30)
+    
+    # Group by category
+    by_category = {}
+    for article in articles:
+        cat = article.get('category', 'other')
+        if cat not in by_category:
+            by_category[cat] = []
+        by_category[cat].append(article)
+    
+    return jsonify({
+        'version': '2.0',
+        'articles': articles,
+        'by_category': by_category,
+        'categories': list(by_category.keys()),
+        'source_count': len(set(a['source'] for a in articles)),
+        'error': None
+    })
+
+@app.route('/feed/refresh', methods=['POST'])
+def feed_refresh():
+    """Force refresh the feed cache"""
+    clear_cache()
+    articles = get_cached_articles(max_per_source=5, max_total=30)
+    return jsonify({
+        'success': True,
+        'articles_count': len(articles),
+        'cached_at': datetime.now().isoformat()
+    })
 
 @app.route('/stocks')
 def stocks():
