@@ -8,24 +8,88 @@ import json
 from datetime import datetime, timedelta
 from flask import jsonify, request
 
+# Module version - bump when schema changes
+CURRENT_VERSION = '1.0'
+
 # File paths
 LIFE_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'life.json')
 
-def load_life_data():
-    """Load personal life tracking data (fitness, mood, learning, social)"""
-    if os.path.exists(LIFE_FILE):
-        try:
-            with open(LIFE_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            pass
+def get_default_life_data():
+    """Return default life data structure for current schema version"""
     return {
-        'version': '1.0',
+        'version': CURRENT_VERSION,
         'fitness': {'workouts': [], 'goals': {'weekly_gym_target': 4, 'primary': 'Build strength and muscle mass'}},
         'mood': {'entries': []},
         'learning': {'books': [], 'courses': [], 'skills': []},
         'social': {'interactions': []}
     }
+
+def migrate_life_data(data):
+    """Migrate life data from older versions to current schema.
+    Returns migrated data dictionary."""
+    if not data:
+        return get_default_life_data()
+    
+    version = data.get('version', '0.0')
+    
+    # Migration chain: apply all needed migrations in order
+    if version == '0.0' or version == '1.0':
+        # Already at current version or no version - ensure all fields exist
+        defaults = get_default_life_data()
+        
+        # Ensure version field
+        data['version'] = CURRENT_VERSION
+        
+        # Ensure fitness structure
+        if 'fitness' not in data:
+            data['fitness'] = defaults['fitness']
+        else:
+            if 'goals' not in data['fitness']:
+                data['fitness']['goals'] = defaults['fitness']['goals']
+            if 'workouts' not in data['fitness']:
+                data['fitness']['workouts'] = []
+        
+        # Ensure mood structure
+        if 'mood' not in data:
+            data['mood'] = defaults['mood']
+        elif 'entries' not in data['mood']:
+            data['mood']['entries'] = []
+        
+        # Ensure learning structure
+        if 'learning' not in data:
+            data['learning'] = defaults['learning']
+        else:
+            for key in ['books', 'courses', 'skills']:
+                if key not in data['learning']:
+                    data['learning'][key] = []
+        
+        # Ensure social structure
+        if 'social' not in data:
+            data['social'] = defaults['social']
+        elif 'interactions' not in data['social']:
+            data['social']['interactions'] = []
+    
+    # Future migrations would go here:
+    # if version == '1.0':
+    #     # migrate 1.0 -> 1.1
+    #     ...
+    
+    return data
+
+def load_life_data():
+    """Load personal life tracking data with automatic migration"""
+    if os.path.exists(LIFE_FILE):
+        try:
+            with open(LIFE_FILE, 'r') as f:
+                data = json.load(f)
+                # Run migrations if needed
+                if data.get('version') != CURRENT_VERSION:
+                    data = migrate_life_data(data)
+                    save_life_data(data)  # Save migrated version
+                return data
+        except (json.JSONDecodeError, IOError):
+            pass
+    return get_default_life_data()
 
 def save_life_data(data):
     """Save personal life tracking data"""
