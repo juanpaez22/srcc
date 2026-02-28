@@ -6,7 +6,7 @@ import json
 import os
 from datetime import datetime, timedelta, timezone
 import pytz
-from config import WEATHER_LAT, WEATHER_LON, WEATHER_CITY, NEWS_FEEDS, STOCKS, DEFAULT_CHORES
+from config import WEATHER_LAT, WEATHER_LON, WEATHER_CITY, NEWS_FEEDS, STOCKS, DEFAULT_CHORES, FEATURES
 from sources import get_cached_articles, fetch_all_articles, get_sources_by_category, clear_cache
 
 app = Flask(__name__)
@@ -530,6 +530,11 @@ def stats():
         'uptime': uptime_str,
         'last_tend_time': data.get('last_tend_time', '')
     }
+
+@app.route('/config')
+def config():
+    """Return feature flags for dashboard"""
+    return {'features': FEATURES, 'version': '1.0'}
 
 @app.route('/tend', methods=['POST'])
 def tend():

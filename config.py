@@ -83,3 +83,18 @@ DEFAULT_CHORES = [
     {"name": "Check smoke detectors", "schedule": "monthly", "schedule_param": "1"},
     {"name": "Clean solar panels", "schedule": "weekly", "schedule_param": "1,0"}
 ]
+
+# Feature flags - enable/disable dashboard sections
+# Set to False to hide that section from the dashboard
+FEATURES = {
+    "weather": True,
+    "stocks": True,
+    "news_digest": True,
+    "ai_digest": True,
+    "feed": True,
+    "fitness": True,
+    "mood": True,
+    "journal": True,
+    "chores": True,
+    "uptime": True
+}
