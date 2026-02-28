@@ -450,6 +450,53 @@ input[type="range"] {
     gap: 15px;
 }
 
+.ai-section {
+    margin-bottom: 20px;
+}
+
+.ai-section h3 {
+    color: #00d4aa;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+}
+
+.ai-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.ai-card {
+    background: linear-gradient(135deg, rgba(0,212,170,0.15) 0%, rgba(0,0,0,0.4) 100%);
+    border: 1px solid rgba(0,212,170,0.3);
+    border-radius: 8px;
+    padding: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ai-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,212,170,0.2);
+}
+
+.ai-card a {
+    text-decoration: none;
+}
+
+.ai-card-title {
+    color: var(--cream);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
+.ai-card-meta {
+    color: #00d4aa;
+    font-size: 0.75rem;
+}
+
 .news-category h3 {
     color: var(--tan);
     font-size: 0.9rem;

@@ -72,6 +72,11 @@
                 <ul class="chores-list" id="chores-list"></ul>
             </section>
 
+            <section class="ai-section">
+                <h3>🤖 AI & Tech News</h3>
+                <div class="ai-cards" id="ai-digest"></div>
+            </section>
+
             <section class="news-section">
                 <h3>📰 Daily Digest</h3>
                 <div class="digest-grid" id="news-digest"></div>
@@ -202,6 +207,38 @@
         }
 
         function updateNews() {
+            // AI-specific news section
+            fetch('/digest')
+                .then(r => r.json())
+                .then(data => {
+                    const aiTheme = data.themes && data.themes.find(t => 
+                        t.theme.toLowerCase().includes('ai') || 
+                        t.theme.toLowerCase().includes('tech')
+                    );
+                    
+                    if (aiTheme && aiTheme.headlines && aiTheme.headlines.length > 0) {
+                        let aiHtml = '<div class="ai-card-grid">';
+                        aiTheme.headlines.slice(0, 6).forEach(h => {
+                            const wordCount = h.title.split(' ').length;
+                            const readTime = Math.max(1, Math.ceil(wordCount / 200));
+                            aiHtml += `<div class="ai-card">
+                                <a href="${h.link}" target="_blank">
+                                    <div class="ai-card-title">${h.title}</div>
+                                    <div class="ai-card-meta">${h.source} · ${readTime}m</div>
+                                </a>
+                            </div>`;
+                        });
+                        aiHtml += '</div>';
+                        document.getElementById('ai-digest').innerHTML = aiHtml;
+                    } else {
+                        document.getElementById('ai-digest').innerHTML = '<span>No AI news available</span>';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('ai-digest').innerHTML = '<span>Unable to load AI news</span>';
+                });
+            
+            // General news digest
             fetch('/digest')
                 .then(r => r.json())
                 .then(data => {
