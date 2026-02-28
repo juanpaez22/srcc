@@ -89,12 +89,11 @@ DEFAULT_CHORES = [
 FEATURES = {
     "weather": True,
     "stocks": True,
-    "news_digest": True,
-    "ai_digest": True,
-    "feed": True,
-    "fitness": True,
-    "mood": True,
+    "life": True,  # Personal metrics (fitness, mood, learning, social)
     "journal": True,
     "chores": True,
+    "ai_digest": True,
+    "news_digest": True,
+    "future_improvements": True,
     "uptime": True
 }

@@ -124,6 +124,39 @@
     <script>
         document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
+        // Feature flags - map features to HTML elements
+        const featureMap = {
+            'weather': '.weather-card',
+            'stocks': '.stocks-card',
+            'life': '#life-card',
+            'journal': '#journal-card',
+            'chores': ['#overdue-section', '#chores-section'],
+            'ai_digest': '.ai-section',
+            'news_digest': '.news-section',
+            'future_improvements': '#future-improvements-card',
+            'uptime': null  # Handled separately in updateStats
+        };
+
+        function applyFeatures() {
+            fetch('/config')
+                .then(r => r.json())
+                .then(data => {
+                    const features = data.features || {};
+                    Object.keys(featureMap).forEach(feature => {
+                        const enabled = features[feature] !== false;
+                        const targets = featureMap[feature];
+                        if (!targets) return;  // uptime handled separately
+                        
+                        const els = Array.isArray(targets) ? targets : [targets];
+                        els.forEach(sel => {
+                            const el = document.querySelector(sel);
+                            if (el) el.style.display = enabled ? '' : 'none';
+                        });
+                    });
+                })
+                .catch(() => {});  // Silent fail - show all if fetch fails
+        }
+
         const weatherCodes = {
             0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
             45: '🌫️', 48: '🌫️',
@@ -437,6 +470,7 @@
         updateLifeMetrics();
         updateJournal();
         updateFutureTasks();
+        applyFeatures();  // Apply feature flags
         setInterval(updateStats, 3000);
         setInterval(updateWeather, 300000);
         setInterval(updateStocks, 60000);
