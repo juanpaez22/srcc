@@ -6,7 +6,7 @@ import json
 import os
 from datetime import datetime, timedelta, timezone
 import pytz
-from config import WEATHER_LAT, WEATHER_LON, WEATHER_CITY, NEWS_FEEDS, STOCKS
+from config import WEATHER_LAT, WEATHER_LON, WEATHER_CITY, NEWS_FEEDS, STOCKS, FEATURES
 
 app = Flask(__name__)
 
@@ -321,6 +321,21 @@ def stats():
         'memory': psutil.virtual_memory().percent,
         'time': time.strftime('%H:%M:%S')
     }
+
+@app.route('/config')
+def config():
+    """Expose app configuration including FEATURES toggles"""
+    return {
+        'FEATURES': FEATURES,
+        'WEATHER_CITY': WEATHER_CITY,
+        'STOCKS': STOCKS,
+        'NEWS_FEEDS': list(NEWS_FEEDS.keys())
+    }
+
+@app.route('/features')
+def features():
+    """Dashboard feature toggles"""
+    return FEATURES
 
 @app.route('/weather')
 def weather():
