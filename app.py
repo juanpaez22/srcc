@@ -512,42 +512,70 @@ def digest_cache():
 
 @app.route('/ai-digest')
 def ai_digest():
-    """AI-powered summary of daily news"""
+    """AI-powered summary of daily news - supports both old summary format and new categorized format"""
     digest = load_digest()
     
     if not digest:
-        # Try /digest as fallback
-        try:
-            resp = requests.get('https://feeds.bbci.co.uk/news/rss.xml', timeout=5)
-            return jsonify({'summary': 'No cached digest. Fetch /digest for live data.', 'themes': []})
-        except:
-            return jsonify({'summary': 'No digest available', 'themes': []})
+        # Try RSS feeds as fallback
+        return jsonify({
+            'summary': 'No cached digest available. Morning digest runs at 5am.',
+            'categories': [],
+            'generated': None
+        })
     
+    # Check for new categorized format first
+    categories = digest.get('categories', [])
+    if categories:
+        # New format with categories
+        return jsonify({
+            'categories': categories,
+            'date': digest.get('date', ''),
+            'generated': datetime.now().strftime('%Y-%m-%d %H:%M')
+        })
+    
+    # Fall back to old single-summary format
+    summary = digest.get('summary', '')
     themes = digest.get('themes', [])
     
-    # Build AI-style summary - include full headline objects for frontend
+    # Build AI-style summary
     summary_parts = []
     for theme in themes:
         theme_name = theme.get('theme', '')
         headlines = theme.get('headlines', [])
         if headlines:
-            # Include full headline objects for JS to use
             summary_parts.append({
                 'theme': theme_name,
-                'headlines': headlines[:5],  # Full objects with title, link, source
+                'headlines': headlines[:5],
                 'count': len(headlines)
             })
     
     return jsonify({
-        'summary': f"Today's digest covers {len(summary_parts)} main topics with {sum(s['count'] for s in summary_parts)} total stories.",
-        'themes': summary_parts,
+        'summary': summary,
+        'categories': summary_parts,
         'generated': datetime.now().strftime('%Y-%m-%d %H:%M')
     })
 
 @app.route('/digest')
 def digest():
-    """Alias for /ai-digest - returns news digest for frontend"""
-    return ai_digest()
+    """RSS-based news digest with themes"""
+    articles = get_news()
+    
+    # Group articles by category
+    themes = {}
+    for article in articles:
+        cat = article.get('category', 'Other')
+        if cat not in themes:
+            themes[cat] = []
+        themes[cat].append({
+            'title': article.get('title', ''),
+            'link': article.get('link', ''),
+            'source': article.get('source', '')
+        })
+    
+    return jsonify({
+        'themes': [{'theme': k, 'headlines': v} for k, v in themes.items()],
+        'generated': datetime.now().strftime('%Y-%m-%d %H:%M')
+    })
 
 @app.route('/journal')
 def journal():

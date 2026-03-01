@@ -497,6 +497,54 @@ input[type="range"] {
     font-size: 0.75rem;
 }
 
+/* AI Categorized Digest Styles */
+.ai-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ai-category {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 3px solid var(--sage);
+}
+
+.ai-category-header {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--tan);
+    margin-bottom: 0.5rem;
+}
+
+.ai-category-summary {
+    color: var(--cream);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+}
+
+.ai-category-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.ai-link {
+    color: #00d4aa;
+    font-size: 0.85rem;
+    text-decoration: none;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    transition: color 0.2s;
+}
+
+.ai-link:hover {
+    color: #00ffcc;
+    text-decoration: underline;
+}
+
 .news-category h3 {
     color: var(--tan);
     font-size: 0.9rem;

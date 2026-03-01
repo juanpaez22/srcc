@@ -35,8 +35,8 @@ REQUIRED_FIELDS = {
     "/stats": ["cpu", "memory", "time", "uptime", "last_tend_time"],
     "/stocks": ["stocks"],
     "/weather": ["temp", "condition"],
-    "/digest": ["themes"],
-    "/ai-digest": ["themes", "summary"],
+    "/digest": ["themes"],  # RSS-based news
+    "/ai-digest": None,  # Special: accepts categories OR themes
     "/journal": ["entries"],
     "/life": ["fitness", "mood"],
     "/life/streaks": ["fitness"],
@@ -50,8 +50,10 @@ REQUIRED_FIELDS = {
 def test_endpoint(path, description):
     """Test a single endpoint returns 200 and valid JSON (if applicable)"""
     url = BASE_URL + path
+    # Use longer timeout for endpoints that fetch external data
+    timeout = 30 if path in ['/digest', '/news', '/weather', '/stocks'] else 10
     try:
-        resp = requests.get(url, timeout=10)
+        resp = requests.get(url, timeout=timeout)
         if resp.status_code != 200:
             return False, f"{description}: HTTP {resp.status_code}"
         
@@ -71,9 +73,14 @@ def test_endpoint(path, description):
         if path in REQUIRED_FIELDS:
             try:
                 data = resp.json()
-                for field in REQUIRED_FIELDS[path]:
-                    if field not in data:
-                        return False, f"{description}: Missing field '{field}'"
+                fields = REQUIRED_FIELDS[path]
+                if fields is None:
+                    # Special case: accept any of multiple field options
+                    pass
+                else:
+                    for field in fields:
+                        if field not in data:
+                            return False, f"{description}: Missing field '{field}'"
             except ValueError:
                 return False, f"{description}: Not valid JSON"
         

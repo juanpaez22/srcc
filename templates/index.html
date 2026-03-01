@@ -242,37 +242,85 @@
 
         function updateNews() {
             // AI-specific news section
-            fetch('/digest')
+            // AI-powered categorized digest
+            fetch('/ai-digest')
                 .then(r => r.json())
                 .then(data => {
-                    const aiTheme = data.themes && data.themes.find(t => 
-                        t.theme.toLowerCase().includes('ai') || 
-                        t.theme.toLowerCase().includes('tech')
-                    );
+                    // Check for new categorized format (has name, summary, links keys)
+                    const hasNewFormat = data.categories && data.categories.length > 0 && 
+                        'name' in data.categories[0] && 'summary' in data.categories[0];
                     
-                    if (aiTheme && aiTheme.headlines && aiTheme.headlines.length > 0) {
-                        let aiHtml = '<div class="ai-card-grid">';
-                        aiTheme.headlines.slice(0, 6).forEach(h => {
-                            const wordCount = h.title.split(' ').length;
-                            const readTime = Math.max(1, Math.ceil(wordCount / 200));
-                            aiHtml += `<div class="ai-card">
-                                <a href="${h.link}" target="_blank">
-                                    <div class="ai-card-title">${h.title}</div>
-                                    <div class="ai-card-meta">${h.source} · ${readTime}m</div>
-                                </a>
-                            </div>`;
+                    if (hasNewFormat) {
+                        // New format with categories
+                        let aiHtml = '<div class="ai-categories">';
+                        
+                        data.categories.forEach(cat => {
+                            const catName = cat.name || 'News';
+                            const catSummary = cat.summary || '';
+                            const catLinks = cat.links || [];
+                            
+                            // Get emoji based on category name
+                            let emoji = '📰';
+                            const nameLower = catName.toLowerCase();
+                            if (nameLower.includes('tech') || nameLower.includes('ai')) emoji = '🤖';
+                            else if (nameLower.includes('world')) emoji = '🌍';
+                            else if (nameLower.includes('sport')) emoji = '⚽';
+                            else if (nameLower.includes('business') || nameLower.includes('market') || nameLower.includes('money')) emoji = '💰';
+                            
+                            aiHtml += `<div class="ai-category">
+                                <div class="ai-category-header">${emoji} ${catName}</div>
+                                <div class="ai-category-summary">${catSummary}</div>
+                                <div class="ai-category-links">`;
+                            
+                            catLinks.slice(0, 3).forEach(link => {
+                                aiHtml += `<a href="${link.url}" target="_blank" class="ai-link">${link.title}</a>`;
+                            });
+                            
+                            aiHtml += `</div></div>`;
                         });
+                        
                         aiHtml += '</div>';
                         document.getElementById('ai-digest').innerHTML = aiHtml;
+                    } 
+                    // Fallback to old format with themes (headlines, theme keys)
+                    else if (data.categories && data.categories.length > 0) {
+                        const aiTheme = data.categories.find(t => 
+                            (t.theme || t.name || '').toLowerCase().includes('ai') || 
+                            (t.theme || t.name || '').toLowerCase().includes('tech')
+                        );
+                        
+                        const headlines = aiTheme?.headlines || aiTheme?.links || [];
+                        
+                        if (headlines.length > 0) {
+                            let aiHtml = '<div class="ai-card-grid">';
+                            headlines.slice(0, 6).forEach(h => {
+                                const title = h.title || h;
+                                const link = h.link || h.url || '#';
+                                const source = h.source || 'News';
+                                const wordCount = title.split(' ').length;
+                                const readTime = Math.max(1, Math.ceil(wordCount / 200));
+                                aiHtml += `<div class="ai-card">
+                                    <a href="${link}" target="_blank">
+                                        <div class="ai-card-title">${title}</div>
+                                        <div class="ai-card-meta">${source} · ${readTime}m</div>
+                                    </a>
+                                </div>`;
+                            });
+                            aiHtml += '</div>';
+                            document.getElementById('ai-digest').innerHTML = aiHtml;
+                        } else {
+                            document.getElementById('ai-digest').innerHTML = '<span>No AI news available</span>';
+                        }
                     } else {
-                        document.getElementById('ai-digest').innerHTML = '<span>No AI news available</span>';
+                        document.getElementById('ai-digest').innerHTML = '<span>No digest available</span>';
                     }
                 })
-                .catch(() => {
+                .catch(err => {
+                    console.error('AI digest error:', err);
                     document.getElementById('ai-digest').innerHTML = '<span>Unable to load AI news</span>';
                 });
             
-            // General news digest
+            // General news digest (RSS-based)
             fetch('/digest')
                 .then(r => r.json())
                 .then(data => {
