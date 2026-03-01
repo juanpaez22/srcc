@@ -1,15 +1,8 @@
- * Serving Flask app 'app'
+ * Serving Flask app 'app.py'
  * Debug mode: off
 [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
  * Running on all addresses (0.0.0.0)
  * Running on http://127.0.0.1:80
  * Running on http://192.168.1.53:80
 [33mPress CTRL+C to quit[0m
-127.0.0.1 - - [26/Feb/2026 02:32:52] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [26/Feb/2026 02:33:05] "GET /nanobot/releases HTTP/1.1" 200 -
-127.0.0.1 - - [26/Feb/2026 03:05:45] "GET /nanobot/releases HTTP/1.1" 200 -
-127.0.0.1 - - [26/Feb/2026 03:05:51] "GET /nanobot/releases HTTP/1.1" 200 -
-127.0.0.1 - - [26/Feb/2026 05:01:02] "POST /digest-cache HTTP/1.1" 200 -
-127.0.0.1 - - [26/Feb/2026 05:01:06] "[31m[1mGET /digest-cache HTTP/1.1[0m" 405 -
-127.0.0.1 - - [26/Feb/2026 05:01:09] "[31m[1mGET /digest-cache HTTP/1.1[0m" 405 -
-127.0.0.1 - - [26/Feb/2026 05:01:28] "[31m[1mGET /digest-cache HTTP/1.1[0m" 405 -
+127.0.0.1 - - [28/Feb/2026 20:11:58] "GET / HTTP/1.1" 200 -

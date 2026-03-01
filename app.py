@@ -343,117 +343,111 @@ def checkin_status():
     yesterday, missing_users, completed_users = get_yesterday_checkin_status()
     return {'yesterday': yesterday, 'missing_users': missing_users, 'completed_users': completed_users}
 
-@app.route('/telemetry', methods=['GET', 'POST'])
+@app.route('/telemetry', methods=['POST'])
 def telemetry():
+    """API endpoint for submitting check-ins (no page)"""
     data = load_data()
     users = data.get('users', ['Default'])
     
-    if request.method == 'POST':
-        action = request.form.get('action') or request.json.get('action') if request.json else None
-        
-        if action == 'add_user':
-            new_user = request.form.get('new_user') or (request.json.get('new_user') if request.json else None)
-            if new_user and new_user not in users:
-                users.append(new_user)
-                data['users'] = users
-                if new_user not in data.get('telemetry', {}):
-                    data['telemetry'][new_user] = []
-                save_data(data)
-                return jsonify({'success': True, 'users': users})
-        
-        # Submit check-in
-        user = request.form.get('user') or (request.json.get('user') if request.json else None)
-        date = request.form.get('date') or (request.json.get('date') if request.json else None)
-        
-        if not user:
-            user = users[0]
-        if not date:
-            date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-        
-        metrics = {}
-        if request.form:
-            metrics = {k: v for k, v in request.form.items() if k not in ['action', 'user', 'date']}
-        elif request.json:
-            metrics = request.json.get('metrics', {})
-        
-        if user not in data.get('telemetry', {}):
-            data['telemetry'][user] = []
-        
-        # Remove existing entry for this date
-        data['telemetry'][user] = [e for e in data['telemetry'][user] if e.get('date') != date]
-        
-        entry = {'date': date, 'metrics': metrics}
-        data['telemetry'][user].append(entry)
-        save_data(data)
-        return jsonify({'success': True})
+    action = request.form.get('action') or request.json.get('action') if request.json else None
     
-    # GET - show form
-    telemetry_data = data.get('telemetry', {})
-    return render_template('telemetry.html', 
-                          users=users, 
-                          telemetry=telemetry_data,
-                          yesterday=(datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d'))
+    if action == 'add_user':
+        new_user = request.form.get('new_user') or (request.json.get('new_user') if request.json else None)
+        if new_user and new_user not in users:
+            users.append(new_user)
+            data['users'] = users
+            if new_user not in data.get('telemetry', {}):
+                data['telemetry'][new_user] = []
+            save_data(data)
+            return jsonify({'success': True, 'users': users})
+    
+    # Submit check-in
+    user = request.form.get('user') or (request.json.get('user') if request.json else None)
+    date = request.form.get('date') or (request.json.get('date') if request.json else None)
+    
+    if not user:
+        user = users[0]
+    if not date:
+        date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    
+    metrics = {}
+    if request.form:
+        metrics = {k: v for k, v in request.form.items() if k not in ['action', 'user', 'date']}
+    elif request.json:
+        metrics = request.json.get('metrics', {})
+    
+    if user not in data.get('telemetry', {}):
+        data['telemetry'][user] = []
+    
+    # Remove existing entry for this date
+    data['telemetry'][user] = [e for e in data['telemetry'][user] if e.get('date') != date]
+    
+    entry = {'date': date, 'metrics': metrics}
+    data['telemetry'][user].append(entry)
+    save_data(data)
+    return jsonify({'success': True})
 
-@app.route('/chores_page', methods=['GET', 'POST'])
+@app.route('/chores_page', methods=['POST'])
 def chores_page():
+    """API endpoint for managing chores (no page)"""
     data = load_data()
     
-    if request.method == 'POST':
-        action = request.form.get('action')
-        
-        if action == 'add':
-            schedule = request.form.get('schedule')
-            schedule_param = request.form.get('schedule_param', '')
-            
-            # Handle weekly (every N weeks)
-            if schedule == 'weekly':
-                weeks = request.form.get('schedule_weeks', '1')
-                day = request.form.get('schedule_param', '6')
-                schedule_param = f"{weeks},{day}"  # e.g., "2,0" = every 2 weeks on Monday
-            
-            # Handle yearly (mm-dd)
-            elif schedule == 'yearly':
-                month = request.form.get('schedule_month', '01')
-                day = request.form.get('schedule_day', '01')
-                schedule_param = f"{month}-{day}"
-            
-            chore = {
-                'name': request.form.get('name'),
-                'schedule': schedule,
-                'schedule_param': schedule_param,
-                'last_done': ''
-            }
-            data['chores'].append(chore)
-        
-        elif action == 'complete':
-            idx = int(request.form.get('index'))
-            if idx < len(data['chores']):
-                data['chores'][idx]['last_done'] = datetime.now().strftime('%Y-%m-%d')
-        
-        elif action == 'delete':
-            idx = int(request.form.get('index'))
-            if idx < len(data['chores']):
-                data['chores'].pop(idx)
-        
-        save_data(data)
+    action = request.form.get('action')
     
-    return render_template('chores.html', chores=data.get('chores', []))
+    if action == 'add':
+        schedule = request.form.get('schedule')
+        schedule_param = request.form.get('schedule_param', '')
+        
+        # Handle weekly (every N weeks)
+        if schedule == 'weekly':
+            weeks = request.form.get('schedule_weeks', '1')
+            day = request.form.get('schedule_param', '6')
+            schedule_param = f"{weeks},{day}"  # e.g., "2,0" = every 2 weeks on Monday
+        
+        # Handle yearly (mm-dd)
+        elif schedule == 'yearly':
+            month = request.form.get('schedule_month', '01')
+            day = request.form.get('schedule_day', '01')
+            schedule_param = f"{month}-{day}"
+        
+        chore = {
+            'name': request.form.get('name'),
+            'schedule': schedule,
+            'schedule_param': schedule_param,
+            'last_done': ''
+        }
+        data['chores'].append(chore)
+    
+    elif action == 'complete':
+        idx = int(request.form.get('index'))
+        if idx < len(data['chores']):
+            data['chores'][idx]['last_done'] = datetime.now().strftime('%Y-%m-%d')
+    
+    elif action == 'delete':
+        idx = int(request.form.get('index'))
+        if idx < len(data['chores']):
+            data['chores'].pop(idx)
+    
+    save_data(data)
+    return jsonify({'success': True})
 
 @app.route('/complete_chore/<int:index>')
 def complete_chore(index):
+    """API to complete a chore"""
     data = load_data()
     if index < len(data['chores']):
         data['chores'][index]['last_done'] = datetime.now().strftime('%Y-%m-%d')
         save_data(data)
-    return redirect(url_for('chores_page'))
+    return jsonify({'success': True})
 
 @app.route('/delete_chore/<int:index>')
 def delete_chore(index):
+    """API to delete a chore"""
     data = load_data()
     if index < len(data['chores']):
         data['chores'].pop(index)
         save_data(data)
-    return redirect(url_for('chores_page'))
+    return jsonify({'success': True})
 
 
 # Digest cache for AI-generated morning news digest
@@ -480,28 +474,39 @@ def digest_cache():
             return jsonify({"status": "ok", "message": "Digest cached"})
         return jsonify({"status": "error", "message": "No data provided"}), 400
 
-# Digest cache for AI-generated morning news digest
-DIGEST_FILE = os.path.join(os.path.dirname(__file__), "digest.json")
-
-def load_digest():
-    if os.path.exists(DIGEST_FILE):
-        with open(DIGEST_FILE, 'r') as f:
-            return json.load(f)
-    return {}
-
-def save_digest(data):
-    with open(DIGEST_FILE, 'w') as f:
-        json.dump(data, f)
-
-@app.route('/digest-cache', methods=['GET', 'POST'])
-def digest_cache():
-    if request.method == 'GET':
-        return jsonify(load_digest())
-    elif request.method == 'POST':
-        data = request.get_json()
-        if data:
-            save_digest(data)
-            return jsonify({"status": "ok", "message": "Digest cached"})
-        return jsonify({"status": "error", "message": "No data provided"}), 400
+@app.route('/ai-digest')
+def ai_digest():
+    """AI-powered summary of daily news"""
+    digest = load_digest()
+    
+    if not digest:
+        # Try /digest as fallback
+        try:
+            resp = requests.get('https://feeds.bbci.co.uk/news/rss.xml', timeout=5)
+            return jsonify({'summary': 'No cached digest. Fetch /digest for live data.', 'themes': []})
+        except:
+            return jsonify({'summary': 'No digest available', 'themes': []})
+    
+    themes = digest.get('themes', [])
+    
+    # Build AI-style summary
+    summary_parts = []
+    for theme in themes:
+        theme_name = theme.get('theme', '')
+        headlines = theme.get('headlines', [])
+        if headlines:
+            # Create a brief summary for each theme
+            titles = [h.get('title', '')[:50] + '...' if len(h.get('title', '')) > 50 else h.get('title', '') for h in headlines[:3]]
+            summary_parts.append({
+                'theme': theme_name,
+                'key_stories': titles,
+                'count': len(headlines)
+            })
+    
+    return jsonify({
+        'summary': f"Today's digest covers {len(summary_parts)} main topics with {sum(s['count'] for s in summary_parts)} total stories.",
+        'themes': summary_parts,
+        'generated': datetime.now().strftime('%Y-%m-%d %H:%M')
+    })
 
 
