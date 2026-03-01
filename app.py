@@ -316,10 +316,31 @@ def index():
 
 @app.route('/stats')
 def stats():
+    # Get uptime
+    uptime_seconds = time.time() - psutil.boot_time()
+    days = int(uptime_seconds // 86400)
+    hours = int((uptime_seconds % 86400) // 3600)
+    minutes = int((uptime_seconds % 3600) // 60)
+    uptime_str = f"{days}d {hours}h {minutes}m"
+    
+    # Get last tend time
+    tend_file = os.path.join(os.path.dirname(__file__), 'data', 'tend.json')
+    last_tend_time = "Never"
+    if os.path.exists(tend_file):
+        try:
+            with open(tend_file, 'r') as f:
+                tend_data = json.load(f)
+                if tend_data and 'last_tend' in tend_data:
+                    last_tend_time = tend_data['last_tend']
+        except:
+            pass
+    
     return {
         'cpu': psutil.cpu_percent(),
         'memory': psutil.virtual_memory().percent,
-        'time': time.strftime('%H:%M:%S')
+        'time': time.strftime('%H:%M:%S'),
+        'uptime': uptime_str,
+        'last_tend_time': last_tend_time
     }
 
 @app.route('/config')

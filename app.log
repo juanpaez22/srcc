@@ -5,24 +5,49 @@
  * Running on http://127.0.0.1:80
  * Running on http://192.168.1.53:80
 [33mPress CTRL+C to quit[0m
-127.0.0.1 - - [28/Feb/2026 22:19:43] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 22:20:18] "GET /ai-digest HTTP/1.1" 200 -
-[2026-02-28 22:20:28,483] ERROR in app: Exception on /config [GET]
-Traceback (most recent call last):
-  File "/usr/lib/python3/dist-packages/flask/app.py", line 1511, in wsgi_app
-    response = self.full_dispatch_request()
-  File "/usr/lib/python3/dist-packages/flask/app.py", line 919, in full_dispatch_request
-    rv = self.handle_user_exception(e)
-  File "/usr/lib/python3/dist-packages/flask/app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "/usr/lib/python3/dist-packages/flask/app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "/home/juanpaez/.nanobot/workspace/dev/srcc/app.py", line 329, in config
-    'FEATURES': FEATURES,
-                ^^^^^^^^
-NameError: name 'FEATURES' is not defined
-127.0.0.1 - - [28/Feb/2026 22:20:28] "[35m[1mGET /config HTTP/1.1[0m" 500 -
-127.0.0.1 - - [28/Feb/2026 22:20:42] "[33mGET /digest HTTP/1.1[0m" 404 -
-127.0.0.1 - - [28/Feb/2026 22:20:59] "GET /digest-cache HTTP/1.1" 200 -
-127.0.0.1 - - [28/Feb/2026 22:21:04] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:09:34] "GET /stats HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:09:54] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:09:54] "GET /stats HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:01] "GET /stocks HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:05] "GET /weather HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:05] "GET /digest HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:05] "GET /ai-digest HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:05] "GET /journal HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:05] "GET /life HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:05] "GET /life/streaks HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:05] "GET /life/mood HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:05] "GET /life/fitness HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:05] "GET /life/learning HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:05] "GET /life/social HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:05] "GET /rancher/tasks HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:05] "GET /chores HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:17] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:17] "GET /stats HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:19] "GET /stocks HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:20] "GET /weather HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:20] "GET /digest HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:20] "GET /ai-digest HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:20] "GET /journal HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:20] "GET /life HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:20] "GET /life/streaks HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:20] "GET /life/mood HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:20] "GET /life/fitness HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:20] "GET /life/learning HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:20] "GET /life/social HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:20] "GET /rancher/tasks HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:20] "GET /chores HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:31] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:31] "GET /stats HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:33] "GET /stocks HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:34] "GET /weather HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:34] "GET /digest HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:34] "GET /ai-digest HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:34] "GET /journal HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:34] "GET /life HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:34] "GET /life/streaks HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:34] "GET /life/mood HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:34] "GET /life/fitness HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:34] "GET /life/learning HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:34] "GET /life/social HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:34] "GET /rancher/tasks HTTP/1.1" 200 -
+127.0.0.1 - - [01/Mar/2026 10:10:34] "GET /chores HTTP/1.1" 200 -
