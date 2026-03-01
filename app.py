@@ -524,4 +524,35 @@ def ai_digest():
         'generated': datetime.now().strftime('%Y-%m-%d %H:%M')
     })
 
+@app.route('/digest')
+def digest():
+    """Alias for /ai-digest - returns news digest for frontend"""
+    return ai_digest()
+
+@app.route('/journal')
+def journal():
+    """Return journal entries"""
+    journal_file = os.path.join(os.path.dirname(__file__), 'data', 'journal.json')
+    if os.path.exists(journal_file):
+        with open(journal_file, 'r') as f:
+            data = json.load(f)
+            return jsonify(data)
+    return jsonify({'version': '1.0', 'entries': []})
+
+@app.route('/future')
+def future():
+    """Return future improvements / pending tasks"""
+    # Path to RANCH_TASKS.md in nanobot workspace
+    tasks_file = '/home/juanpaez/.nanobot/workspace/memory/RANCH_TASKS.md'
+    tasks = []
+    if os.path.exists(tasks_file):
+        with open(tasks_file, 'r') as f:
+            content = f.read()
+            # Extract pending task lines: "- [ ]" (pending)
+            import re
+            matches = re.findall(r'- \[ \] (.+)', content)
+            for task in matches:
+                tasks.append(task.strip())
+    return jsonify({'tasks': tasks})
+
 
