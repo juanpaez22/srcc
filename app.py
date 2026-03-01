@@ -504,17 +504,16 @@ def ai_digest():
     
     themes = digest.get('themes', [])
     
-    # Build AI-style summary
+    # Build AI-style summary - include full headline objects for frontend
     summary_parts = []
     for theme in themes:
         theme_name = theme.get('theme', '')
         headlines = theme.get('headlines', [])
         if headlines:
-            # Create a brief summary for each theme
-            titles = [h.get('title', '')[:50] + '...' if len(h.get('title', '')) > 50 else h.get('title', '') for h in headlines[:3]]
+            # Include full headline objects for JS to use
             summary_parts.append({
                 'theme': theme_name,
-                'key_stories': titles,
+                'headlines': headlines[:5],  # Full objects with title, link, source
                 'count': len(headlines)
             })
     
@@ -558,7 +557,18 @@ def future():
 @app.route('/rancher/tasks')
 def rancher_tasks():
     """Alias for /future - return active tasks from RANCH_TASKS.md"""
-    return future()
+    # Path to RANCH_TASKS.md in nanobot workspace
+    tasks_file = '/home/juanpaez/.nanobot/workspace/memory/RANCH_TASKS.md'
+    tasks = []
+    if os.path.exists(tasks_file):
+        with open(tasks_file, 'r') as f:
+            content = f.read()
+            # Extract pending task lines: "- [ ]" (pending)
+            import re
+            matches = re.findall(r'- \[ \] (.+)', content)
+            for task in matches:
+                tasks.append(task.strip())
+    return jsonify({'active_tasks': tasks})
 
 # Life metrics endpoints
 LIFE_FILE = os.path.join(os.path.dirname(__file__), 'data', 'life.json')
