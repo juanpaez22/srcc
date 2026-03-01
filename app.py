@@ -555,4 +555,85 @@ def future():
                 tasks.append(task.strip())
     return jsonify({'tasks': tasks})
 
+@app.route('/rancher/tasks')
+def rancher_tasks():
+    """Alias for /future - return active tasks from RANCH_TASKS.md"""
+    return future()
+
+# Life metrics endpoints
+LIFE_FILE = os.path.join(os.path.dirname(__file__), 'data', 'life.json')
+
+def load_life_data():
+    if os.path.exists(LIFE_FILE):
+        with open(LIFE_FILE, 'r') as f:
+            return json.load(f)
+    return {'version': '1.0', 'fitness': {}, 'mood': {}, 'learning': {}, 'social': {}}
+
+@app.route('/life')
+def life():
+    """All life data"""
+    return jsonify(load_life_data())
+
+@app.route('/life/streaks')
+def life_streaks():
+    """Fitness streaks"""
+    data = load_life_data()
+    workouts = data.get('fitness', {}).get('workouts', [])
+    
+    # Calculate streak
+    if not workouts:
+        return jsonify({'fitness': {'current_streak': 0, 'weekly_count': 0, 'weekly_target': 4}})
+    
+    # Get unique dates sorted
+    dates = sorted(set(w['date'] for w in workouts), reverse=True)
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    # Current streak
+    streak = 0
+    check_date = datetime.strptime(today, '%Y-%m-%d')
+    for d in dates:
+        dt = datetime.strptime(d, '%Y-%m-%d')
+        if (check_date - dt).days <= 1:
+            streak += 1
+            check_date = dt
+        else:
+            break
+    
+    # Weekly count
+    week_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+    weekly_count = sum(1 for d in dates if d >= week_ago)
+    weekly_target = data.get('fitness', {}).get('goals', {}).get('weekly_gym_target', 4)
+    
+    return jsonify({
+        'fitness': {
+            'current_streak': streak,
+            'weekly_count': weekly_count,
+            'weekly_target': weekly_target
+        }
+    })
+
+@app.route('/life/mood')
+def life_mood():
+    """Mood entries"""
+    data = load_life_data()
+    return jsonify(data.get('mood', {}))
+
+@app.route('/life/fitness')
+def life_fitness():
+    """Fitness/workout data"""
+    data = load_life_data()
+    return jsonify(data.get('fitness', {}))
+
+@app.route('/life/learning')
+def life_learning():
+    """Learning data (books, courses, skills)"""
+    data = load_life_data()
+    return jsonify(data.get('learning', {}))
+
+@app.route('/life/social')
+def life_social():
+    """Social interactions"""
+    data = load_life_data()
+    return jsonify(data.get('social', {}))
+
 
